@@ -29,9 +29,6 @@ ENV DNF_INSTALL="dnf -y install"
 # update
 RUN dnf -y update
 
-# TEST
-RUN dnf group list available --verbose
-
 # install qt5 or qt6
 RUN if [ "$QT_VERSION" = "6" ]; then \
     $DNF_INSTALL qt6-qtbase-devel qt6-qtserialport-devel libxkbcommon-devel; \
@@ -40,7 +37,7 @@ else \
 fi
 
 # install general deps
-RUN dnf -y group install 'Development Tools' 'C Development Tools and Libraries' 'RPM Development Tools' && \
+RUN dnf -y group install development-tools c-development rpm-development-tools && \
     $DNF_INSTALL \
     ninja-build \
     curl \

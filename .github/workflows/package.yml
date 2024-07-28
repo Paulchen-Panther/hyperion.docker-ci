@@ -107,7 +107,7 @@ jobs:
             SUITE=${{ matrix.os.codename }}
             QT_VERSION=${{ matrix.qt_version }}
             REPOSITORY="${{ github.server_url }}/${{ env.REPOSITORY }}"
-            CMAKE_VERSION="${{ env.CMAKE_VERSION }}"
+            CMAKE_VERSION=${{ env.CMAKE_VERSION }}
 
   debian_armv6:
     name: 🐧 ${{ matrix.os.description }} Qt ${{ matrix.qt_version }} (armv6)
@@ -223,4 +223,4 @@ jobs:
             SUITE=${{ matrix.tag }}
             QT_VERSION=${{ matrix.qt_version }}
             REPOSITORY="${{ github.server_url }}/${{ env.REPOSITORY }}"
-            CMAKE_VERSION="${{ env.CMAKE_VERSION }}"
+            CMAKE_VERSION=${{ env.CMAKE_VERSION }}

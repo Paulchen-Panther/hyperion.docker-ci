@@ -1,12 +1,14 @@
 ARG SUITE="buster"
 ARG QT_VERSION="5"
 ARG REPOSITORY="https://github.com/hyperion-project"
+ARG CMAKE_VERSION="3.28.3"
 
 FROM balenalib/rpi-raspbian:${SUITE}
 
 ARG SUITE
 ARG QT_VERSION
 ARG REPOSITORY
+ARG CMAKE_VERSION
 ARG TARGETPLATFORM
 
 ENV QEMU_EXECVE=1
@@ -61,7 +63,6 @@ RUN $APT_INSTALL \
     libglib2.0-dev
 
 # Compile and install CMake
-ENV CMAKE_VERSION="3.28.3"
 ENV CMAKE_URL="https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}"
 RUN set -xe \
     && mkdir -p /tmp/cmake \

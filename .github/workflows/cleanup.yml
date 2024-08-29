@@ -23,25 +23,13 @@ jobs:
       - name: ⬇ Fetch multi-platform package version SHAs
         id: multi-arch-digests
         run: |
-          UBUNTU=""
-          for image in focal jammy mantic noble oracular; do
-            RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/ubuntu:$image | jq -r '.manifests[].digest' | paste -s -d ' ' -);
-            UBUNTU+=" ${RESPONSE}";
-            echo "${UBUNTU}";
-          done
-          DEBIAN=""
-          for image in buster bullseye bookworm trixie; do
-            RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/debian:$image | jq -r '.manifests[].digest' | paste -s -d ' ' -);
-            DEBIAN+=" ${RESPONSE}";
-            echo "${DEBIAN}";
-          done
           FEDORA=""
           for image in 39 40 41; do
             RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/fedora:$image | jq -r '.manifests[].digest' | paste -s -d ' ' -);
             FEDORA+=" ${RESPONSE}";
             echo "${FEDORA}";
           done
-          echo "multi-arch-digests=$UBUNTU,$DEBIAN,$FEDORA" >> $GITHUB_OUTPUT
+          echo "multi-arch-digests=$FEDORA" >> $GITHUB_OUTPUT
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3.0.0
@@ -58,6 +46,6 @@ jobs:
           token: ${{ secrets.HYPERION_BOT_TOKEN }}
           tag-selection: "untagged"
           cut-off: 1w
-          dry-run: true
+          dry-run: false
           rust-log: container_retention_policy=debug
           skip-shas: ${{ steps.multi-arch-digests.outputs.multi-arch-digests }}

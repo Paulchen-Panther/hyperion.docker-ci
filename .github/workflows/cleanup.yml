@@ -1,0 +1,52 @@
+name: Cleanup
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 6'
+
+permissions:
+  packages: write
+
+env:
+  REPOSITORY: hyperion-project
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    name: ⏰ Scheduled cleanup
+    steps:
+      - name: ✅ Determine current Repository
+        if: ${{ !startsWith(github.repository, env.REPOSITORY) }}
+        run: echo "REPOSITORY=$(echo '${{ github.actor }}' | tr '[:upper:]' '[:lower:]')" >> ${GITHUB_ENV}
+
+      - name: ⬇ Fetch multi-platform package version SHAs
+        shell: bash
+        id: multi-arch-digests
+        run: |
+          set -euo pipefail
+          UBUNTU=""
+          for image in focal jammy mantic noble oracular; do
+            UBUNTU=$(docker manifest inspect "ghcr.io/${{ env.REPOSITORY }}/ubuntu:$image" | jq -r '.manifests.[] | .digest' | paste -s -d ' ' -)
+          done
+          DEBIAN=""
+          for image in buster bullseye bookworm trixie; do
+            DEBIAN=$(docker manifest inspect "ghcr.io/${{ env.REPOSITORY }}/debian:$image" | jq -r '.manifests.[] | .digest' | paste -s -d ' ' -)
+          done
+          FEDORA=""
+          for image in 39 40 41; do
+            FEDORA=$(docker manifest inspect "ghcr.io/${{ env.REPOSITORY }}/fedora:$image" | jq -r '.manifests.[] | .digest' | paste -s -d ' ' -)
+          done
+          echo "multi-arch-digests=$UBUNTU,$DEBIAN,$FEDORA" >> $GITHUB_OUTPUT
+
+      - name: 🧹 Delete unused images
+        if: ${{ env.SECRET_BOT_TOKEN != null }}
+        uses: snok/container-retention-policy@v3.0.0
+        with:
+          account: ${{ env.REPOSITORY }}
+          token: ${{ secrets.HYPERION_BOT_TOKEN }}
+          tag-selection: "untagged"
+          dry-run: true
+          skip-shas: ${{ steps.multi-arch-digests.outputs.multi-arch-digests }}
+        env:
+          SECRET_BOT_TOKEN: ${{ secrets.HYPERION_BOT_TOKEN }}

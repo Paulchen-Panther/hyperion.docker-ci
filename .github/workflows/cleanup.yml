@@ -23,22 +23,21 @@ jobs:
       - name: ⬇ Fetch multi-platform package version SHAs
         id: multi-arch-digests
         run: |
-          set -euo pipefail
           UBUNTU=""
           for image in focal jammy mantic noble oracular; do
-            RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/ubuntu:$image | jq -r '.manifests.[] | .digest' | paste -s -d ' ' -);
+            RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/ubuntu:$image | jq -r '.manifests[].digest' | paste -s -d ' ' -);
             UBUNTU+=" ${RESPONSE}";
             sleep 2;
           done
           DEBIAN=""
           for image in buster bullseye bookworm trixie; do
-            RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/debian:$image | jq -r '.manifests.[] | .digest' | paste -s -d ' ' -);
+            RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/debian:$image | jq -r '.manifests[].digest' | paste -s -d ' ' -);
             DEBIAN+=" ${RESPONSE}";
             sleep 2;
           done
           FEDORA=""
           for image in 39 40 41; do
-            RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/fedora:$image | jq -r '.manifests.[] | .digest' | paste -s -d ' ' -);
+            RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/fedora:$image | jq -r '.manifests[].digest' | paste -s -d ' ' -);
             FEDORA+=" ${RESPONSE}";
             sleep 2;
           done

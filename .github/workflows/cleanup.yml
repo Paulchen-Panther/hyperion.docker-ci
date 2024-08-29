@@ -27,24 +27,24 @@ jobs:
           for image in focal jammy mantic noble oracular; do
             RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/ubuntu:$image | jq -r '.manifests[].digest' | paste -s -d ' ' -);
             UBUNTU+=" ${RESPONSE}";
-            sleep 2;
+            echo "${UBUNTU}";
           done
           DEBIAN=""
           for image in buster bullseye bookworm trixie; do
             RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/debian:$image | jq -r '.manifests[].digest' | paste -s -d ' ' -);
             DEBIAN+=" ${RESPONSE}";
-            sleep 2;
+            echo "${DEBIAN}";
           done
           FEDORA=""
           for image in 39 40 41; do
             RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/fedora:$image | jq -r '.manifests[].digest' | paste -s -d ' ' -);
             FEDORA+=" ${RESPONSE}";
-            sleep 2;
+            echo "${FEDORA}";
           done
           echo "multi-arch-digests=$UBUNTU,$DEBIAN,$FEDORA" >> $GITHUB_OUTPUT
 
       - name: 🧹 Delete unused images
-        if: ${{ env.SECRET_BOT_TOKEN != null }}
+        # if: ${{ env.SECRET_BOT_TOKEN != null }}
         uses: snok/container-retention-policy@v3.0.0
         with:
           account: ${{ env.REPOSITORY }}

@@ -50,6 +50,7 @@ jobs:
           account: ${{ env.REPOSITORY }}
           token: ${{ secrets.HYPERION_BOT_TOKEN }}
           tag-selection: "untagged"
+          cut-off: 1w
           dry-run: true
           skip-shas: ${{ steps.multi-arch-digests.outputs.multi-arch-digests }}
         env:

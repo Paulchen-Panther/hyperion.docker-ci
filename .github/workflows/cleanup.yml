@@ -21,21 +21,20 @@ jobs:
         run: echo "REPOSITORY=$(echo '${{ github.actor }}' | tr '[:upper:]' '[:lower:]')" >> ${GITHUB_ENV}
 
       - name: ⬇ Fetch multi-platform package version SHAs
-        shell: bash
         id: multi-arch-digests
         run: |
           set -euo pipefail
           UBUNTU=""
           for image in focal jammy mantic noble oracular; do
-            UBUNTU=$(docker manifest inspect "ghcr.io/${{ env.REPOSITORY }}/ubuntu:$image" | jq -r '.manifests.[] | .digest' | paste -s -d ' ' -)
+            UBUNTU=$(docker manifest inspect 'ghcr.io/${{ env.REPOSITORY }}/ubuntu:$image' | jq -r '.manifests.[] | .digest' | paste -s -d ' ' -)
           done
           DEBIAN=""
           for image in buster bullseye bookworm trixie; do
-            DEBIAN=$(docker manifest inspect "ghcr.io/${{ env.REPOSITORY }}/debian:$image" | jq -r '.manifests.[] | .digest' | paste -s -d ' ' -)
+            DEBIAN=$(docker manifest inspect 'ghcr.io/${{ env.REPOSITORY }}/debian:$image' | jq -r '.manifests.[] | .digest' | paste -s -d ' ' -)
           done
           FEDORA=""
           for image in 39 40 41; do
-            FEDORA=$(docker manifest inspect "ghcr.io/${{ env.REPOSITORY }}/fedora:$image" | jq -r '.manifests.[] | .digest' | paste -s -d ' ' -)
+            FEDORA=$(docker manifest inspect 'ghcr.io/${{ env.REPOSITORY }}/fedora:$image' | jq -r '.manifests.[] | .digest' | paste -s -d ' ' -)
           done
           echo "multi-arch-digests=$UBUNTU,$DEBIAN,$FEDORA" >> $GITHUB_OUTPUT
 

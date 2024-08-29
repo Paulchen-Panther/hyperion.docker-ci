@@ -59,4 +59,5 @@ jobs:
           tag-selection: "untagged"
           cut-off: 1w
           dry-run: true
+          rust-log: container_retention_policy=debug
           skip-shas: ${{ steps.multi-arch-digests.outputs.multi-arch-digests }}

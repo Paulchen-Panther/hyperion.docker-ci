@@ -43,6 +43,13 @@ jobs:
           done
           echo "multi-arch-digests=$UBUNTU,$DEBIAN,$FEDORA" >> $GITHUB_OUTPUT
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.HYPERION_BOT_TOKEN }}
+
       - name: 🧹 Delete unused images
         # if: ${{ env.SECRET_BOT_TOKEN != null }}
         uses: snok/container-retention-policy@v3.0.0
@@ -53,5 +60,3 @@ jobs:
           cut-off: 1w
           dry-run: true
           skip-shas: ${{ steps.multi-arch-digests.outputs.multi-arch-digests }}
-        env:
-          SECRET_BOT_TOKEN: ${{ secrets.HYPERION_BOT_TOKEN }}

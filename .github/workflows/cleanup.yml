@@ -24,34 +24,24 @@ jobs:
         id: multi-arch-digests
         run: |
           UBUNTU=""
-          for image in focal jammy mantic noble oracular; do
+          for image in focal jammy jammy-qt6 mantic mantic-qt6 noble noble-qt6 oracular oracular-qt6; do
             RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/ubuntu:$image | jq -r '.manifests[].digest' | paste -s -d ' ' -);
             UBUNTU+=" ${RESPONSE}";
-            echo "${UBUNTU}";
           done
           DEBIAN=""
-          for image in buster bullseye bookworm trixie; do
+          for image in buster bullseye bullseye-qt6 bookworm bookworm-qt6 trixie trixie-qt6; do
             RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/debian:$image | jq -r '.manifests[].digest' | paste -s -d ' ' -);
             DEBIAN+=" ${RESPONSE}";
-            echo "${DEBIAN}";
           done
           FEDORA=""
-          for image in 39 40 41; do
+          for image in 39 39-qt6 40 40-qt6 41 41-qt6; do
             RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/fedora:$image | jq -r '.manifests[].digest' | paste -s -d ' ' -);
             FEDORA+=" ${RESPONSE}";
-            echo "${FEDORA}";
           done
           echo "multi-arch-digests=$UBUNTU,$DEBIAN,$FEDORA" >> $GITHUB_OUTPUT
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3.0.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.HYPERION_BOT_TOKEN }}
-
       - name: 🧹 Delete unused images
-        # if: ${{ env.SECRET_BOT_TOKEN != null }}
+        if: ${{ env.SECRET_BOT_TOKEN != null }}
         uses: snok/container-retention-policy@v3.0.0
         with:
           account: user

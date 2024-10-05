@@ -26,4 +26,5 @@ jobs:
           owner: ${{ env.REPOSITORY }}
           repository: hyperion.docker-ci
           packages: ubuntu,debian,fedora
+          delete-ghost-images: true
           token: ${{ secrets.HYPERION_BOT_TOKEN }}

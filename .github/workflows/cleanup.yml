@@ -20,33 +20,10 @@ jobs:
         if: ${{ !startsWith(github.repository, env.REPOSITORY) }}
         run: echo "REPOSITORY=$(echo '${{ github.actor }}' | tr '[:upper:]' '[:lower:]')" >> ${GITHUB_ENV}
 
-      - name: ⬇ Fetch multi-platform package version SHAs
-        id: multi-arch-digests
-        run: |
-          UBUNTU=""
-          for image in focal jammy jammy-qt6 mantic mantic-qt6 noble noble-qt6 oracular oracular-qt6; do
-            RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/ubuntu:$image | jq -r '.manifests[].digest' | paste -s -d ' ' -);
-            UBUNTU+=" ${RESPONSE}";
-          done
-          DEBIAN=""
-          for image in buster bullseye bullseye-qt6 bookworm bookworm-qt6 trixie trixie-qt6; do
-            RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/debian:$image | jq -r '.manifests[].digest' | paste -s -d ' ' -);
-            DEBIAN+=" ${RESPONSE}";
-          done
-          FEDORA=""
-          for image in 39 39-qt6 40 40-qt6 41 41-qt6; do
-            RESPONSE=$(docker manifest inspect ghcr.io/${{ env.REPOSITORY }}/fedora:$image | jq -r '.manifests[].digest' | paste -s -d ' ' -);
-            FEDORA+=" ${RESPONSE}";
-          done
-          echo "multi-arch-digests=$UBUNTU,$DEBIAN,$FEDORA" >> $GITHUB_OUTPUT
-
       - name: 🧹 Delete unused images
-        if: ${{ env.SECRET_BOT_TOKEN != null }}
-        uses: snok/container-retention-policy@v3.0.0
+        uses: dataaxiom/ghcr-cleanup-action@v1
         with:
-          account: user
+          owner: ${{ env.REPOSITORY }}
+          repository: hyperion.docker-ci
           token: ${{ secrets.HYPERION_BOT_TOKEN }}
-          tag-selection: "untagged"
-          cut-off: 1w
-          rust-log: container_retention_policy=debug
-          skip-shas: ${{ steps.multi-arch-digests.outputs.multi-arch-digests }}
+          dry-run: true

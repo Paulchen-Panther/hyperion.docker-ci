@@ -27,4 +27,3 @@ jobs:
           repository: hyperion.docker-ci
           packages: ubuntu,debian,fedora
           token: ${{ secrets.HYPERION_BOT_TOKEN }}
-          dry-run: true

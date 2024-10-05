@@ -23,7 +23,5 @@ jobs:
       - name: 🧹 Delete unused images
         uses: dataaxiom/ghcr-cleanup-action@v1
         with:
-          owner: ${{ env.REPOSITORY }}
-          repository: hyperion.docker-ci
           token: ${{ secrets.HYPERION_BOT_TOKEN }}
           dry-run: true

@@ -3,7 +3,7 @@
 # Build a standalone Raspbian Docker image using debuerreotype.
 #
 # The resulting image is built FROM scratch with the Raspbian rootfs tarball
-# and tagged as raspbian:<suite> with linux/arm/v7 platform metadata.
+# and tagged as raspbian:<suite> with linux/arm/v6 platform metadata.
 #
 # Usage:
 #   build-raspbian.sh [--arch <arch>] <suite>
@@ -41,7 +41,7 @@ Arguments:
   suite  Raspbian suite name (e.g. bullseye, bookworm)
 
 The resulting Docker image is tagged as raspbian:<suite> with
-linux/arm/v7 platform metadata set via Docker Buildx.
+linux/arm/v6 platform metadata set via Docker Buildx.
 
 Examples:
   $(basename "$0") bullseye
@@ -132,13 +132,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 DOCKERFILE="$REPO_ROOT/raspbian/Dockerfile"
 
-echo "==> Building Docker image: raspbian:$SUITE (platform linux/arm/v7)"
+echo "==> Building Docker image: raspbian:$SUITE (platform linux/arm/v6)"
 
 # Build the Docker image using FROM scratch + ADD rootfs.tar.xz /.
-# --platform linux/arm/v7 embeds the correct architecture metadata in the
-# image manifest so Docker on ARMv7 devices (Raspberry Pi) pulls it correctly.
+# --platform linux/arm/v6 embeds the correct architecture metadata in the
+# image manifest so Docker on ARMv6 devices (Raspberry Pi Zero/1) pulls it correctly.
 docker buildx build \
-    --platform "linux/arm/v7" \
+    --platform "linux/arm/v6" \
     --file "$DOCKERFILE" \
     --tag "raspbian:$SUITE" \
     --load \

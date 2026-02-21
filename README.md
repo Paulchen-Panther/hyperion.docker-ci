@@ -14,7 +14,7 @@ GHCR under `ghcr.io/paulchen-panther/raspbian:<suite>`.
 | Bullseye (Raspbian 11) | `ghcr.io/paulchen-panther/raspbian:bullseye` |
 | Bookworm (Raspbian 12) | `ghcr.io/paulchen-panther/raspbian:bookworm` |
 
-Each image contains an armhf (linux/arm/v7) Raspbian rootfs built directly from
+Each image contains an armhf (linux/arm/v6) Raspbian rootfs built directly from
 `http://raspbian.raspberrypi.org/raspbian/` via `debootstrap`, packaged as a
 compressed tar archive and added to a `FROM scratch` Docker image.
 
@@ -58,4 +58,4 @@ Build a Raspbian image:
 ```
 
 The script produces a local Docker image tagged `raspbian:<suite>` with
-`linux/arm/v7` platform metadata.
+`linux/arm/v6` platform metadata.

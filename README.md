@@ -26,36 +26,9 @@ The [`.github/workflows/raspbian.yml`](.github/workflows/raspbian.yml) workflow:
 2. Registers ARM binfmt handlers via `docker/setup-qemu-action` so that the
    debootstrap second-stage (which executes armhf binaries) works on the x86-64
    runner.
-3. Runs [`scripts/build-raspbian.sh`](scripts/build-raspbian.sh) for each suite
-   in the matrix (`bullseye`, `bookworm`).
+3. Builds the Raspbian rootfs inline for each suite in the matrix
+   (`bullseye`, `bookworm`) and writes the `FROM scratch` Dockerfile on the fly.
 4. Pushes the resulting image to GHCR using `GITHUB_TOKEN`.
 
 The workflow triggers on every push to `master`, on a weekly schedule
 (Sundays at 02:00 UTC), and can be triggered manually via `workflow_dispatch`.
-
-### Running the script locally
-
-Install the required packages:
-
-```bash
-sudo apt-get install -y \
-  debuerreotype debootstrap gnupg \
-  qemu-user-static raspbian-archive-keyring
-```
-
-Register the ARM binfmt handler (needed for debootstrap second stage):
-
-```bash
-sudo update-binfmts --enable qemu-arm
-```
-
-Build a Raspbian image:
-
-```bash
-./scripts/build-raspbian.sh bullseye
-# or for bookworm:
-./scripts/build-raspbian.sh --arch armhf bookworm
-```
-
-The script produces a local Docker image tagged `raspbian:<suite>` with
-`linux/arm/v6` platform metadata.

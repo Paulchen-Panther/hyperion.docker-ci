@@ -1,0 +1,73 @@
+name: Raspbian Docker Images
+run-name: |
+  ${{ github.event_name == 'schedule' && '⏰ Scheduled build' || '' }}
+  ${{ github.event_name == 'push' && format('🌱 Push build - {0}', github.event.head_commit.message) || '' }}
+  ${{ github.event_name == 'workflow_dispatch' && '🔧 Manual build' || '' }}
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+
+  build:
+    name: 🍓 Raspbian ${{ matrix.suite }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [bullseye, bookworm]
+
+    steps:
+      - name: 👀 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📦 Install build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            debuerreotype \
+            debootstrap \
+            gnupg \
+            qemu-user-static \
+            raspbian-archive-keyring \
+            wget \
+            xz-utils
+
+      - name: 🔧 Set up QEMU (registers binfmt handlers for ARM emulation)
+        uses: docker/setup-qemu-action@v3
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔑 Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏗️ Build Raspbian ${{ matrix.suite }}
+        run: |
+          chmod +x scripts/build-raspbian.sh
+          scripts/build-raspbian.sh --arch armhf ${{ matrix.suite }}
+
+      - name: 🚀 Push to GitHub Container Registry
+        run: |
+          OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          IMAGE="ghcr.io/${OWNER}/raspbian:${{ matrix.suite }}"
+          docker tag "raspbian:${{ matrix.suite }}" "$IMAGE"
+          docker push "$IMAGE"
+          echo "Pushed $IMAGE"
+
+      - name: 👀 Inspect image manifest
+        run: |
+          OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          docker buildx imagetools inspect "ghcr.io/${OWNER}/raspbian:${{ matrix.suite }}"

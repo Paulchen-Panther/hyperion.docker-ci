@@ -2,9 +2,8 @@ ARG SUITE="bullseye"
 ARG QT_VERSION="6"
 ARG REPOSITORY="https://github.com/hyperion-project"
 ARG CMAKE_VERSION="3.28.3"
-ARG RASPBIAN_REGISTRY="ghcr.io/paulchen-panther"
 
-FROM ${RASPBIAN_REGISTRY}/raspbian:${SUITE}
+FROM raspbian-local:latest
 
 ARG SUITE
 ARG QT_VERSION

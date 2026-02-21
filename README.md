@@ -18,17 +18,7 @@ Each image contains an armhf (linux/arm/v6) Raspbian rootfs built directly from
 `http://raspbian.raspberrypi.org/raspbian/` via `debootstrap`, packaged as a
 compressed tar archive and added to a `FROM scratch` Docker image.
 
-### How the workflow works
-
-The [`.github/workflows/raspbian.yml`](.github/workflows/raspbian.yml) workflow:
-1. Installs `debuerreotype`, `debootstrap`, `qemu-user-static`, and
-   `raspbian-archive-keyring` on the runner.
-2. Registers ARM binfmt handlers via `docker/setup-qemu-action` so that the
-   debootstrap second-stage (which executes armhf binaries) works on the x86-64
-   runner.
-3. Builds the Raspbian rootfs inline for each suite in the matrix
-   (`bullseye`, `bookworm`) and writes the `FROM scratch` Dockerfile on the fly.
-4. Pushes the resulting image to GHCR using `GITHUB_TOKEN`.
-
-The workflow triggers on every push to `master`, on a weekly schedule
-(Sundays at 02:00 UTC), and can be triggered manually via `workflow_dispatch`.
+These images are built automatically as part of the `debian-armv6` build in the
+[Package Repository](.github/workflows/package.yml) workflow: whenever a Debian
+`armv6` image is requested, the Raspbian base image for that suite is built and
+pushed first, then used as the `FROM` base in the `debian-armv6` Dockerfile.

@@ -28,8 +28,82 @@ env:
 
 jobs:
 
+  build_raspbian:
+    name: 🍓 Build Raspbian ${{ inputs.codename }} base image
+    if: ${{ inputs.distribution == 'debian' && contains(inputs.target_platform, 'armv6') }}
+    runs-on: ubuntu-24.04-arm
+    env:
+      ARCH: armhf
+      SUITE: ${{ inputs.codename }}
+      MIRROR: http://raspbian.raspberrypi.org/raspbian/
+      KEYRING: /usr/share/keyrings/raspbian-archive-keyring.gpg
+
+    steps:
+      - name: ✅ Determine current Repository
+        if: ${{ !startsWith(github.repository, env.REPOSITORY) }}
+        run: echo "REPOSITORY=$(echo '${{ github.actor }}' | tr '[:upper:]' '[:lower:]')" >> ${GITHUB_ENV}
+
+      - name: 📦 Install build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            debuerreotype \
+            debootstrap \
+            gnupg \
+            qemu-user-static \
+            raspbian-archive-keyring \
+            wget \
+            xz-utils
+
+      - name: 🔧 Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔑 Login to GitHub Container Registry
+        if: ${{ env.SECRET_DOCKER_CI != null }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.DOCKER_CI }}
+
+      - name: 🏗️ Build Raspbian rootfs and 🚀 Push Docker image
+        if: ${{ env.SECRET_DOCKER_CI != null }}
+        run: |
+          WORKDIR="$(mktemp -d /tmp/raspbian-build.XXXXXXXX)"
+
+          echo "==> Building Raspbian ${SUITE} (${ARCH}) rootfs..."
+          sudo debuerreotype-init \
+            --arch "${ARCH}" \
+            --keyring "${KEYRING}" \
+            "${WORKDIR}/rootfs" \
+            "${SUITE}" \
+            "${MIRROR}"
+
+          sudo debuerreotype-minimizing-config "${WORKDIR}/rootfs"
+
+          echo "==> Creating rootfs tarball..."
+          sudo debuerreotype-tar "${WORKDIR}/rootfs" "${WORKDIR}/rootfs.tar.xz"
+          sudo chown "$(id -u):$(id -g)" "${WORKDIR}/rootfs.tar.xz"
+
+          printf 'FROM scratch\nADD rootfs.tar.xz /\nCMD ["/bin/bash"]\n' \
+            > "${WORKDIR}/Dockerfile"
+
+          echo "==> Building and pushing ghcr.io/${REPOSITORY}/raspbian:${SUITE} (linux/arm/v6)..."
+          docker buildx build \
+            --platform "linux/arm/v6" \
+            --file "${WORKDIR}/Dockerfile" \
+            --tag "ghcr.io/${REPOSITORY}/raspbian:${SUITE}" \
+            --push \
+            "${WORKDIR}"
+
+          sudo rm -rf "${WORKDIR}"
+
   build_and_push:
     name: 👷 Build ${{ matrix.target_platform }}
+    needs: build_raspbian
     runs-on: ${{ matrix.target_platform == 'amd64' && 'ubuntu-22.04' || 'ubuntu-22.04-arm' }}
     strategy:
       fail-fast: false
@@ -100,6 +174,7 @@ jobs:
             QT_VERSION=${{ inputs.qt_version }}
             REPOSITORY="${{ github.server_url }}/${{ env.REPOSITORY }}"
             CMAKE_VERSION=${{ env.CMAKE_VERSION }}
+            RASPBIAN_REGISTRY=ghcr.io/${{ env.REPOSITORY }}
 
       - name: ⬇ Export digest
         run: |

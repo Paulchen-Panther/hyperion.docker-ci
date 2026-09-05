@@ -19,9 +19,9 @@ RUN --security=insecure \
     debuerreotype-minimizing-config /tmp/rootfs; \
     mkdir -p /tmp/rootfs/etc/apt/trusted.gpg.d; \
     gpg --batch --yes --dearmor -o /tmp/rootfs/etc/apt/trusted.gpg.d/raspbian-archive-keyring.gpg /tmp/raspbian.asc; \
-    debuerreotype-apt-get /tmp/rootfs update; \
     debuerreotype-apt-get /tmp/rootfs install -y --no-install-recommends gpgv; \
-    echo 'APT::Key::gpgvcommand "/usr/bin/gpgv";' > /tmp/rootfs/etc/apt/apt.conf.d/99-use-gpgv
+    echo 'APT::Key::gpgvcommand "/usr/bin/gpgv";' > /tmp/rootfs/etc/apt/apt.conf.d/99-use-gpgv; \
+    debuerreotype-apt-get /tmp/rootfs update
 
 # Final image
 FROM scratch

@@ -9,7 +9,7 @@ ARG SUITE
 
 RUN --security=insecure \
     apt-get update && apt-get install -y --no-install-recommends ca-certificates debootstrap gnupg wget qemu-user-static && \
-    qemu-debootstrap --no-check-gpg --arch="armhf" --include=gpgv "${SUITE}" /tmp/rootfs "http://raspbian.raspberrypi.org/raspbian/" && \
+    debootstrap --no-check-gpg --arch="armhf" --include=gpgv "${SUITE}" /tmp/rootfs "http://raspbian.raspberrypi.org/raspbian/" || { cat /tmp/rootfs/debootstrap/debootstrap.log; exit 1; } && \
     mkdir -p /tmp/rootfs/etc/apt/trusted.gpg.d && \
     wget -O /tmp/raspbian.asc "https://archive.raspbian.org/raspbian.public.key" && \
     gpg --batch --yes --dearmor -o /tmp/rootfs/etc/apt/trusted.gpg.d/raspbian-archive-keyring.gpg /tmp/raspbian.asc && \

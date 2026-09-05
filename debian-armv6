@@ -31,15 +31,9 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 ENV QEMU_EXECVE=1
 
-# Debian forky's apt verifies signatures with sqv (Sequoia), which since 2026-02-01 rejects
-# key self-certifications made with SHA1 - as used by both the Raspbian and Raspberry Pi
-# Foundation archive keys (unrefreshed since ~2012). Extend the cutoff so these still validate;
-# see https://michael-prokop.at/blog/2026/01/31/apt-sha-1-keys-2026-02-01/
-RUN mkdir -p /etc/crypto-policies/back-ends; \
-    printf '[hash_algorithms]\nsha1.second_preimage_resistance = 2027-01-01\n' > /etc/crypto-policies/back-ends/apt-sequoia.config
-
 # adding raspberrypi repository
-RUN apt-get update && apt-get -y install --no-install-recommends ca-certificates curl gnupg; \
+RUN echo 'APT::Key::gpgvcommand "/usr/bin/gpgv";' > /etc/apt/apt.conf.d/99-use-gpgv; \
+    apt-get update && apt-get -y install --no-install-recommends ca-certificates curl gnupg; \
     curl -fsSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor -o /usr/share/keyrings/raspberrypi-archive-keyring.gpg; \
     echo "deb [signed-by=/usr/share/keyrings/raspberrypi-archive-keyring.gpg] http://archive.raspberrypi.org/debian/ ${SUITE} main" > /etc/apt/sources.list.d/raspi.list; \
     apt-get update

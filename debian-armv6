@@ -18,7 +18,10 @@ RUN --security=insecure \
     debuerreotype-init --arch "armhf" --non-debian --keyring "/usr/share/keyrings/raspbian-archive-keyring.pgp" /tmp/rootfs "${SUITE}" "http://raspbian.raspberrypi.org/raspbian/"; \
     debuerreotype-minimizing-config /tmp/rootfs; \
     mkdir -p /tmp/rootfs/etc/apt/trusted.gpg.d; \
-    gpg --batch --yes --dearmor -o /tmp/rootfs/etc/apt/trusted.gpg.d/raspbian-archive-keyring.gpg /tmp/raspbian.asc
+    gpg --batch --yes --dearmor -o /tmp/rootfs/etc/apt/trusted.gpg.d/raspbian-archive-keyring.gpg /tmp/raspbian.asc; \
+    debuerreotype-apt-get /tmp/rootfs update; \
+    debuerreotype-apt-get /tmp/rootfs install -y --no-install-recommends gpgv; \
+    echo 'APT::Key::gpgvcommand "/usr/bin/gpgv";' > /tmp/rootfs/etc/apt/apt.conf.d/99-use-gpgv
 
 # Final image
 FROM scratch
@@ -32,9 +35,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV QEMU_EXECVE=1
 
 # adding raspberrypi repository
-RUN apt-get update -o Acquire::AllowInsecureRepositories=true -o Acquire::AllowDowngradeToInsecureRepositories=true 2>&1 || true; \
-    apt-get -y install --no-install-recommends --allow-unauthenticated ca-certificates curl gnupg gpgv; \
-    echo 'APT::Key::gpgvcommand "/usr/bin/gpgv";' > /etc/apt/apt.conf.d/99-use-gpgv; \
+RUN apt-get -y install --no-install-recommends ca-certificates curl gnupg; \
     apt-get update; \
     curl -fsSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor -o /usr/share/keyrings/raspberrypi-archive-keyring.gpg; \
     echo "deb [signed-by=/usr/share/keyrings/raspberrypi-archive-keyring.gpg] http://archive.raspberrypi.org/debian/ ${SUITE} main" > /etc/apt/sources.list.d/raspi.list; \

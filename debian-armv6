@@ -3,29 +3,21 @@ ARG SUITE=bullseye
 ARG QT_VERSION=6
 ARG CMAKE_VERSION="3.28.3"
 
-# Base image with the Raspbian rootfs
-FROM --platform=$BUILDPLATFORM debian:${SUITE}-slim AS raspbian-base
+# Base image with the Debian rootfs (Raspberry Pi OS uses upstream Debian for armhf)
+FROM --platform=$BUILDPLATFORM debian:${SUITE}-slim AS raspios-base
 ARG SUITE
 
 RUN --security=insecure \
     apt-get update && apt-get install -y --no-install-recommends ca-certificates debuerreotype debootstrap gnupg gpgv wget xz-utils qemu-user-static; \
-    wget -O /tmp/raspbian.asc "https://archive.raspbian.org/raspbian.public.key"; \
-    gpg --batch --no-default-keyring --keyring "/tmp/raspbian-archive-keyring.pgp" --import /tmp/raspbian.asc; \
-    wget -O /tmp/Release.gpg "http://archive.raspbian.org/raspbian/dists/${SUITE}/Release.gpg"; \
-    wget -O /tmp/Release     "http://archive.raspbian.org/raspbian/dists/${SUITE}/Release"; \
-    gpgv --keyring /tmp/raspbian-archive-keyring.pgp /tmp/Release.gpg /tmp/Release; \
-    cp /tmp/raspbian-archive-keyring.pgp /usr/share/keyrings/raspbian-archive-keyring.pgp; \
-    debuerreotype-init --arch "armhf" --non-debian --keyring "/usr/share/keyrings/raspbian-archive-keyring.pgp" /tmp/rootfs "${SUITE}" "http://raspbian.raspberrypi.org/raspbian/"; \
+    debuerreotype-init --arch "armhf" --keyring "/usr/share/keyrings/debian-archive-keyring.gpg" /tmp/rootfs "${SUITE}" "http://deb.debian.org/debian/"; \
     debuerreotype-minimizing-config /tmp/rootfs; \
-    mkdir -p /tmp/rootfs/etc/apt/trusted.gpg.d; \
-    gpg --batch --yes --dearmor -o /tmp/rootfs/etc/apt/trusted.gpg.d/raspbian-archive-keyring.gpg /tmp/raspbian.asc; \
     debuerreotype-apt-get /tmp/rootfs install -y --no-install-recommends gpgv; \
     echo 'APT::Key::gpgvcommand "/usr/bin/gpgv";' > /tmp/rootfs/etc/apt/apt.conf.d/99-use-gpgv; \
     debuerreotype-apt-get /tmp/rootfs update
 
 # Final image
 FROM scratch
-COPY --from=raspbian-base /tmp/rootfs /
+COPY --from=raspios-base /tmp/rootfs /
 
 ARG SUITE
 ARG QT_VERSION
@@ -35,8 +27,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV QEMU_EXECVE=1
 
 # adding raspberrypi repository
-RUN apt-get -y install --no-install-recommends ca-certificates curl gnupg; \
-    apt-get update; \
+RUN apt-get update && apt-get -y install --no-install-recommends ca-certificates curl gnupg; \
     curl -fsSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor -o /usr/share/keyrings/raspberrypi-archive-keyring.gpg; \
     echo "deb [signed-by=/usr/share/keyrings/raspberrypi-archive-keyring.gpg] http://archive.raspberrypi.org/debian/ ${SUITE} main" > /etc/apt/sources.list.d/raspi.list; \
     apt-get update
@@ -49,7 +40,7 @@ else \
 fi
 
 # install deps
-RUN apt-get -y install \
+RUN apt-get update && apt-get -y install \
     devscripts \
     fakeroot \
     debhelper \

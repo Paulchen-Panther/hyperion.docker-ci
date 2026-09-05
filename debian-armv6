@@ -8,12 +8,11 @@ FROM --platform=$BUILDPLATFORM debian:${SUITE}-slim AS raspios-base
 ARG SUITE
 
 RUN --security=insecure \
-    apt-get update && apt-get install -y --no-install-recommends ca-certificates debuerreotype debootstrap gnupg gpgv wget xz-utils qemu-user-static && \
-    debuerreotype-init --non-debian --arch "armhf" --keyring "/usr/share/keyrings/debian-archive-keyring.gpg" /tmp/rootfs "${SUITE}" "http://deb.debian.org/debian/" && \
-    debuerreotype-minimizing-config /tmp/rootfs && \
-    debuerreotype-apt-get /tmp/rootfs install -y --no-install-recommends gpgv && \
-    echo 'APT::Key::gpgvcommand "/usr/bin/gpgv";' > /tmp/rootfs/etc/apt/apt.conf.d/99-use-gpgv && \
-    debuerreotype-apt-get /tmp/rootfs update
+    apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates debootstrap qemu-user-static && \
+    debootstrap --no-check-gpg --arch=armhf "${SUITE}" /tmp/rootfs "http://deb.debian.org/debian" && \
+    echo "deb [trusted=yes] http://archive.raspberrypi.org/debian/ ${SUITE} main" > /tmp/rootfs/etc/apt/sources.list.d/raspi.list && \
+    chroot /tmp/rootfs apt-get update
 
 # Final image
 FROM scratch
@@ -25,12 +24,6 @@ ARG CMAKE_VERSION
 ARG DEBIAN_FRONTEND=noninteractive
 
 ENV QEMU_EXECVE=1
-
-# adding raspberrypi repository
-RUN apt-get update && apt-get -y install --no-install-recommends ca-certificates curl gnupg; \
-    curl -fsSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor -o /usr/share/keyrings/raspberrypi-archive-keyring.gpg; \
-    echo "deb [signed-by=/usr/share/keyrings/raspberrypi-archive-keyring.gpg] http://archive.raspberrypi.org/debian/ ${SUITE} main" > /etc/apt/sources.list.d/raspi.list; \
-    apt-get update
 
 # install qt5 or qt6 (qt6 is not available on debian buster/bullseye)
 RUN if ([ "$SUITE" = "bookworm" ] || [ "$SUITE" = "trixie" ] || [ "$SUITE" = "forky" ]) && [ "$QT_VERSION" = "6" ]; then \

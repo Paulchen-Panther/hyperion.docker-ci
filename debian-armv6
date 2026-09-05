@@ -32,8 +32,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV QEMU_EXECVE=1
 
 # adding raspberrypi repository
-RUN echo 'APT::Key::gpgvcommand "/usr/bin/gpgv";' > /etc/apt/apt.conf.d/99-use-gpgv; \
-    apt-get update && apt-get -y install --no-install-recommends ca-certificates curl gnupg; \
+RUN apt-get update && apt-get -y install --no-install-recommends ca-certificates curl gnupg gpgv; \
+    echo 'APT::Key::gpgvcommand "/usr/bin/gpgv";' > /etc/apt/apt.conf.d/99-use-gpgv; \
     curl -fsSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor -o /usr/share/keyrings/raspberrypi-archive-keyring.gpg; \
     echo "deb [signed-by=/usr/share/keyrings/raspberrypi-archive-keyring.gpg] http://archive.raspberrypi.org/debian/ ${SUITE} main" > /etc/apt/sources.list.d/raspi.list; \
     apt-get update

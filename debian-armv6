@@ -9,7 +9,7 @@ ARG SUITE
 
 RUN --security=insecure \
     apt-get update && apt-get install -y --no-install-recommends ca-certificates debuerreotype debootstrap gnupg gpgv wget xz-utils qemu-user-static; \
-    debuerreotype-init --arch "armhf" --keyring "/usr/share/keyrings/debian-archive-keyring.gpg" /tmp/rootfs "${SUITE}" "$(date -u +%s)" "http://deb.debian.org/debian/"; \
+    debuerreotype-init --arch "armhf" --keyring "/usr/share/keyrings/debian-archive-keyring.gpg" /tmp/rootfs "${SUITE}" "@$(date -u +%s)" "http://deb.debian.org/debian/"; \
     debuerreotype-minimizing-config /tmp/rootfs; \
     debuerreotype-apt-get /tmp/rootfs install -y --no-install-recommends gpgv; \
     echo 'APT::Key::gpgvcommand "/usr/bin/gpgv";' > /tmp/rootfs/etc/apt/apt.conf.d/99-use-gpgv; \

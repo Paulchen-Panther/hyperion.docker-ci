@@ -9,13 +9,12 @@ ARG SUITE
 
 RUN --security=insecure \
     apt-get update && apt-get install -y --no-install-recommends ca-certificates debootstrap gnupg wget qemu-user-static && \
-    debootstrap --no-check-gpg --arch="armhf" "${SUITE}" /tmp/rootfs "http://raspbian.raspberrypi.org/raspbian/" && \
+    qemu-debootstrap --no-check-gpg --arch="armhf" --include=gpgv "${SUITE}" /tmp/rootfs "http://raspbian.raspberrypi.org/raspbian/" && \
     mkdir -p /tmp/rootfs/etc/apt/trusted.gpg.d && \
     wget -O /tmp/raspbian.asc "https://archive.raspbian.org/raspbian.public.key" && \
     gpg --batch --yes --dearmor -o /tmp/rootfs/etc/apt/trusted.gpg.d/raspbian-archive-keyring.gpg /tmp/raspbian.asc && \
-    mkdir -p /tmp/rootfs/etc/apt/apt.conf.d && \
     echo 'APT::Key::GPGVCommand "/usr/bin/gpgv";' > /tmp/rootfs/etc/apt/apt.conf.d/99use-gpgv-not-sqv && \
-    echo "deb [trusted=yes] http://archive.raspberrypi.org/debian/ ${SUITE} main contrib non-free rpi firmware" > /tmp/rootfs/etc/apt/sources.list.d/raspi.list && \
+    echo "deb [signed-by=/usr/share/keyrings/raspberrypi-archive-keyring.gpg] http://archive.raspberrypi.org/debian/ ${SUITE} main contrib non-free rpi firmware" > /tmp/rootfs/etc/apt/sources.list.d/raspi.list && \
     chroot /tmp/rootfs apt-get update && \
     rm -rf /tmp/rootfs/var/lib/apt/lists/*
 

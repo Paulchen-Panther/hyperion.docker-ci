@@ -8,7 +8,7 @@ FROM --platform=$BUILDPLATFORM debian:${SUITE}-slim AS raspbian-base
 ARG SUITE
 
 RUN --security=insecure \
-    apt-get update && apt-get install -y --no-install-recommends mmdebstrap qemu-user-static && \
+    apt-get update && apt-get install -y --no-install-recommends mmdebstrap arch-test qemu-user-static binfmt-support && \
     mmdebstrap --arch="armhf" --include=gpgv "${SUITE}" /tmp/rootfs "http://archive.raspbian.org/raspbian/" && \
     echo 'APT::Key::GPGVCommand "/usr/bin/gpgv";' > /tmp/rootfs/etc/apt/apt.conf.d/99use-gpgv-not-sqv && \
     echo "deb [trusted=yes] http://raspbian.raspberrypi.org/raspbian/ ${SUITE} main" > /tmp/rootfs/etc/apt/sources.list.d/raspi.list && \

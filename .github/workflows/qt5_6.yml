@@ -36,11 +36,6 @@ jobs:
       matrix:
         target_platform: ${{ fromJson(inputs.target_platform) }}
         target_lookup: [{ 'amd64': 'linux/amd64', 'arm64': 'linux/arm64', 'armv6': 'linux/arm/v6', 'armv7': 'linux/arm/v7' }]
-        isBullseyeQt6:
-          - ${{ inputs.distribution == 'debian' && inputs.codename == 'bullseye' && inputs.qt_version == '6' }}
-        exclude:
-          - isBullseyeQt6: true
-            target_platform: 'armv6'
 
     steps:
       - name: 👀 Checkout

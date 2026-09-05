@@ -3,20 +3,25 @@ ARG SUITE=bullseye
 ARG QT_VERSION=6
 ARG CMAKE_VERSION="3.28.3"
 
-# Base image with the Debian rootfs (Raspberry Pi OS uses upstream Debian for armhf)
-FROM --platform=$BUILDPLATFORM debian:${SUITE}-slim AS raspios-base
+# Base image with the Raspbian rootfs
+FROM --platform=$BUILDPLATFORM debian:${SUITE}-slim AS raspbian-base
 ARG SUITE
 
 RUN --security=insecure \
-    apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates debootstrap qemu-user-static && \
-    debootstrap --no-check-gpg --arch=armhf "${SUITE}" /tmp/rootfs "http://deb.debian.org/debian" && \
-    echo "deb [trusted=yes] http://archive.raspberrypi.org/debian/ ${SUITE} main" > /tmp/rootfs/etc/apt/sources.list.d/raspi.list && \
-    chroot /tmp/rootfs apt-get update
+    apt-get update && apt-get install -y --no-install-recommends ca-certificates debootstrap gnupg wget qemu-user-static && \
+    debootstrap --no-check-gpg --arch="armhf" "${SUITE}" /tmp/rootfs "http://raspbian.raspberrypi.org/raspbian/" && \
+    mkdir -p /tmp/rootfs/etc/apt/trusted.gpg.d && \
+    wget -O /tmp/raspbian.asc "https://archive.raspbian.org/raspbian.public.key" && \
+    gpg --batch --yes --dearmor -o /tmp/rootfs/etc/apt/trusted.gpg.d/raspbian-archive-keyring.gpg /tmp/raspbian.asc && \
+    mkdir -p /tmp/rootfs/etc/apt/apt.conf.d && \
+    echo 'APT::Key::GPGVCommand "/usr/bin/gpgv";' > /tmp/rootfs/etc/apt/apt.conf.d/99use-gpgv-not-sqv && \
+    echo "deb [trusted=yes] http://archive.raspberrypi.org/debian/ ${SUITE} main contrib non-free rpi firmware" > /tmp/rootfs/etc/apt/sources.list.d/raspi.list && \
+    chroot /tmp/rootfs apt-get update && \
+    rm -rf /tmp/rootfs/var/lib/apt/lists/*
 
 # Final image
 FROM scratch
-COPY --from=raspios-base /tmp/rootfs /
+COPY --from=raspbian-base /tmp/rootfs /
 
 ARG SUITE
 ARG QT_VERSION
@@ -24,6 +29,8 @@ ARG CMAKE_VERSION
 ARG DEBIAN_FRONTEND=noninteractive
 
 ENV QEMU_EXECVE=1
+
+RUN apt-get update
 
 # install qt5 or qt6 (qt6 is not available on debian buster/bullseye)
 RUN if ([ "$SUITE" = "bookworm" ] || [ "$SUITE" = "trixie" ] || [ "$SUITE" = "forky" ]) && [ "$QT_VERSION" = "6" ]; then \
@@ -33,7 +40,7 @@ else \
 fi
 
 # install deps
-RUN apt-get update && apt-get -y install \
+RUN apt-get -y install \
     devscripts \
     fakeroot \
     debhelper \

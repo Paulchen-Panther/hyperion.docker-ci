@@ -8,12 +8,11 @@ FROM --platform=$BUILDPLATFORM debian:${SUITE}-slim AS raspbian-base
 ARG SUITE
 
 RUN --security=insecure \
-    apt-get update && apt-get install -y --no-install-recommends mmdebstrap arch-test qemu-user-static binfmt-support && \
-    mmdebstrap --arch="armhf" --include=gpgv "${SUITE}" /tmp/rootfs "http://archive.raspbian.org/raspbian/" && \
+    apt-get update && apt-get install -y --no-install-recommends debootstrap qemu-user-static && \
+    debootstrap --no-check-gpg --arch="armhf" --include=gpgv "${SUITE}" /tmp/rootfs "http://archive.raspbian.org/raspbian/" && \
     echo 'APT::Key::GPGVCommand "/usr/bin/gpgv";' > /tmp/rootfs/etc/apt/apt.conf.d/99use-gpgv-not-sqv && \
     echo "deb [trusted=yes] http://raspbian.raspberrypi.org/raspbian/ ${SUITE} main" > /tmp/rootfs/etc/apt/sources.list.d/raspi.list && \
-    chroot /tmp/rootfs apt-get update && \
-    rm -rf /tmp/rootfs/var/lib/apt/lists/*
+    chroot /tmp/rootfs apt-get update
 
 # Final image
 FROM scratch

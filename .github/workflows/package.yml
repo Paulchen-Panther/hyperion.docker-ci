@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        qt_version: [5, 6]
+        qt_version: [5]
         os:
           # - distribution: ubuntu
           #   codename: jammy

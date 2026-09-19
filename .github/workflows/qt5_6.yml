@@ -12,10 +12,6 @@ on:
         type: string
         default: 'jammy'
         required: false
-      qt_version:
-        type: string
-        default: '6'
-        required: false
       target_platform:
         type: string
         default: "['amd64']"
@@ -29,11 +25,12 @@ env:
 jobs:
 
   build_and_push:
-    name: 👷 Build ${{ matrix.target_platform }}
+    name: 👷 Build Qt${{ matrix.qt_version }} ${{ matrix.target_platform }}
     runs-on: ${{ matrix.target_platform == 'amd64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
     strategy:
       fail-fast: false
       matrix:
+        qt_version: [5, 6]
         target_platform: ${{ fromJson(inputs.target_platform) }}
         target_lookup: [{ 'amd64': 'linux/amd64', 'arm64': 'linux/arm64', 'armv6': 'linux/arm/v6', 'armv7': 'linux/arm/v7' }]
 
@@ -53,7 +50,7 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ env.REPOSITORY }}/${{ inputs.distribution }}
-          tags: ${{ inputs.qt_version == '6' && format('{0}-qt6', inputs.codename) || inputs.codename }}
+          tags: ${{ matrix.qt_version == '6' && format('{0}-qt6', inputs.codename) || inputs.codename }}
           labels: |
             org.opencontainers.image.description=Compilation environment to build Hyperion for ${{ inputs.distribution }} ${{ inputs.codename }}
             org.opencontainers.image.vendor=Hyperion Project
@@ -93,7 +90,7 @@ jobs:
           build-args: |
             DIST=${{ inputs.distribution }}
             SUITE=${{ inputs.codename }}
-            QT_VERSION=${{ inputs.qt_version }}
+            QT_VERSION=${{ matrix.qt_version }}
             REPOSITORY="${{ github.server_url }}/${{ env.REPOSITORY }}"
             CMAKE_VERSION=${{ env.CMAKE_VERSION }}
 
@@ -106,22 +103,26 @@ jobs:
       - name: 📦 Upload digest
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ inputs.distribution }}-${{ inputs.codename }}-qt${{ inputs.qt_version }}-${{ matrix.target_platform }}
+          name: ${{ inputs.distribution }}-${{ inputs.codename }}-qt${{ matrix.qt_version }}-${{ matrix.target_platform }}
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
 
   merge:
-    name: 👷 Merge and 🚀 Push
+    name: 👷 Merge Qt${{ matrix.qt_version }} and 🚀 Push
     needs: build_and_push
     runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        qt_version: [5, 6]
 
     steps:
       - name: 💾 Download digests
         uses: actions/download-artifact@v8
         with:
           path: /tmp/digests
-          pattern: ${{ inputs.distribution }}-${{ inputs.codename }}-qt${{ inputs.qt_version }}-*
+          pattern: ${{ inputs.distribution }}-${{ inputs.codename }}-qt${{ matrix.qt_version }}-*
           merge-multiple: true
 
       - name: ✅ Determine current Repository
@@ -136,7 +137,7 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ env.REPOSITORY }}/${{ inputs.distribution }}
-          tags: ${{ inputs.qt_version == '6' && format('{0}-qt6', inputs.codename) || inputs.codename }}
+          tags: ${{ matrix.qt_version == '6' && format('{0}-qt6', inputs.codename) || inputs.codename }}
           labels: |
             org.opencontainers.image.description=Compilation environment to build Hyperion for ${{ inputs.distribution }} ${{ inputs.codename }}
             org.opencontainers.image.vendor=Hyperion Project

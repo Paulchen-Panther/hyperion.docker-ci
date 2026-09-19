@@ -12,11 +12,10 @@ on:
 jobs:
 
   ubuntu_debian_fedora:
-    name: 🐧 ${{ matrix.os.description }} Qt ${{ matrix.qt_version }}
+    name: 🐧 ${{ matrix.os.description }}
     strategy:
       fail-fast: false
       matrix:
-        qt_version: [ 5, 6 ]
         os:
           - distribution: ubuntu
             codename: jammy
@@ -73,7 +72,6 @@ jobs:
     with:
       distribution: ${{ matrix.os.distribution }}
       codename: ${{ matrix.os.codename }}
-      qt_version: ${{ matrix.qt_version }}
       target_platform: ${{ matrix.os.target_platform }}
 
   cleanup:

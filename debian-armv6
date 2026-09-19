@@ -8,13 +8,13 @@ FROM --platform=$BUILDPLATFORM debian:${SUITE}-slim AS raspbian-base
 ARG SUITE
 
 RUN --security=insecure \
-    apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gpg debootstrap qemu-user-static && \
-    curl -fsSL https://archive.raspbian.org/raspbian.public.key | gpg --dearmor > /tmp/raspbian.gpg && \
-    curl -fsSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor > /tmp/raspberrypi.gpg && \
+    apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gpg gpgv xz-utils debootstrap qemu-user-static && \
+    curl -fsSL "https://archive.raspbian.org/raspbian/pool/main/r/raspbian-archive-keyring/raspbian-archive-keyring_20120528.4_all.deb" -o /tmp/keyring.deb && dpkg-deb -x /tmp/keyring.deb /tmp/raspbian-keyring-pkg && rm /tmp/keyring.deb && \
     STAGING_SUITES=$(curl -fsSL "http://archive.raspbian.org/raspbian/dists/${SUITE}/Release" -o /tmp/release && { grep -qx "Suite: testing" /tmp/release && echo "--extra-suites=${SUITE}-staging" || true; }) && \
-    debootstrap --keyring=/tmp/raspbian.gpg --arch="armhf" --variant="minbase" ${STAGING_SUITES} "${SUITE}" /tmp/rootfs "http://archive.raspbian.org/raspbian/" && \
-    install -D -m 0644 /tmp/raspbian.gpg /tmp/rootfs/etc/apt/trusted.gpg.d/raspbian-archive-keyring.gpg && \
-    install -D -m 0644 /tmp/raspberrypi.gpg /tmp/rootfs/usr/share/keyrings/raspberrypi-archive-keyring.gpg && \
+    debootstrap --keyring=/tmp/raspbian-keyring-pkg/usr/share/keyrings/raspbian-archive-keyring.gpg --arch="armhf" --variant="minbase" ${STAGING_SUITES} "${SUITE}" /tmp/rootfs "http://archive.raspbian.org/raspbian/" && \
+    curl -fsSL "https://archive.raspberrypi.org/debian/pool/main/r/raspberrypi-archive-keyring/raspberrypi-archive-keyring_2025.1+rpt1_all.deb" -o /tmp/keyring.deb && dpkg-deb -x /tmp/keyring.deb /tmp/raspberrypi-keyring-pkg && rm /tmp/keyring.deb && \
+    install -D -m 0644 /tmp/raspbian-keyring-pkg/usr/share/keyrings/raspbian-archive-keyring.gpg /tmp/rootfs/etc/apt/trusted.gpg.d/raspbian-archive-keyring.gpg && \
+    install -D -m 0644 /tmp/raspberrypi-keyring-pkg/usr/share/keyrings/raspberrypi-archive-keyring.gpg /tmp/rootfs/usr/share/keyrings/raspberrypi-archive-keyring.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/raspberrypi-archive-keyring.gpg] http://archive.raspberrypi.org/debian/ ${SUITE} main" > /tmp/rootfs/etc/apt/sources.list.d/raspi.list && \
     chroot /tmp/rootfs apt-get update
 

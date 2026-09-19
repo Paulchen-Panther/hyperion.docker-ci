@@ -9,9 +9,9 @@ ARG SUITE
 
 RUN --security=insecure \
     apt-get update && apt-get install -y --no-install-recommends ca-certificates debootstrap qemu-user-static && \
-    debootstrap --no-check-gpg --arch="armhf" --include="gpgv" --variant="minbase" "${SUITE}-staging" /tmp/rootfs "http://archive.raspbian.org/raspbian/" || { cat /tmp/rootfs/debootstrap/debootstrap.log; exit 1; } && \
+    debootstrap --no-check-gpg --arch="armhf" --include="gpgv" --variant="minbase" "${SUITE}" /tmp/rootfs "http://archive.raspbian.org/raspbian/" || { cat /tmp/rootfs/debootstrap/debootstrap.log; exit 1; } && \
     echo 'APT::Key::GPGVCommand "/usr/bin/gpgv";' > /tmp/rootfs/etc/apt/apt.conf.d/99use-gpgv-not-sqv && \
-    echo "deb [trusted=yes] http://archive.raspberrypi.org/debian/ ${SUITE} main" > /tmp/rootfs/etc/apt/sources.list.d/raspi.list && \
+    echo "deb [trusted=yes] http://archive.raspbian.org/raspbian/ ${SUITE}-staging main" > /tmp/rootfs/etc/apt/sources.list.d/raspi.list && \
     chroot /tmp/rootfs apt-get update
 
 # Final image

@@ -36,6 +36,7 @@ fi
 
 # install deps
 RUN apt-get -y install \
+    curl \
     devscripts \
     fakeroot \
     debhelper \

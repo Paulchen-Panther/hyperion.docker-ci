@@ -9,12 +9,10 @@ ARG SUITE
 
 RUN --security=insecure \
     apt-get update && apt-get install -y --no-install-recommends ca-certificates debootstrap qemu-user-static curl && \
-    debootstrap --no-check-gpg --arch="armhf" --include="gpgv" --variant="minbase" "${SUITE}" /tmp/rootfs "http://archive.raspbian.org/raspbian/" || { cat /tmp/rootfs/debootstrap/debootstrap.log; exit 1; } && \
+    STAGING_SUITES=$(curl -fsSL "http://archive.raspbian.org/raspbian/dists/${SUITE}/Release" -o /tmp/release && { grep -qx "Suite: testing" /tmp/release && echo "--extra-suites=${SUITE}-staging" || true; }) && \
+    debootstrap --no-check-gpg --arch="armhf" --include="gpgv" --variant="minbase" ${STAGING_SUITES} "${SUITE}" /tmp/rootfs "http://archive.raspbian.org/raspbian/" && \
     echo 'APT::Key::GPGVCommand "/usr/bin/gpgv";' > /tmp/rootfs/etc/apt/apt.conf.d/99use-gpgv-not-sqv && \
     echo "deb [trusted=yes] http://archive.raspberrypi.org/debian/ ${SUITE} main" > /tmp/rootfs/etc/apt/sources.list.d/raspi.list && \
-    if curl -fsSL "http://archive.raspbian.org/raspbian/dists/${SUITE}/Release" | grep -qx "Suite: testing"; then \
-        echo "deb [trusted=yes] http://archive.raspbian.org/raspbian/ ${SUITE}-staging main" >> /tmp/rootfs/etc/apt/sources.list.d/raspi.list; \
-    fi && \
     chroot /tmp/rootfs apt-get update
 
 # Final image

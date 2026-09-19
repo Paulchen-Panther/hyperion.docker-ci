@@ -1,6 +1,5 @@
 ARG DIST="debian"
 ARG SUITE="bookworm"
-ARG QT_VERSION="6"
 ARG REPOSITORY="https://github.com/hyperion-project"
 ARG CMAKE_VERSION="4.4.3"
 ARG DEBIAN_FRONTEND=noninteractive
@@ -9,7 +8,6 @@ FROM ${DIST}:${SUITE}
 
 ARG DIST
 ARG SUITE
-ARG QT_VERSION
 ARG REPOSITORY
 ARG CMAKE_VERSION
 ARG DEBIAN_FRONTEND
@@ -23,22 +21,22 @@ ENV DEBEMAIL="admin@hyperion-project.org"
 # update
 RUN apt-get update
 
-# install qt5 or qt6
-RUN if [ "$QT_VERSION" = "6" ]; then \
-    if [ "$SUITE" = "jammy" ]; then \
+# install general deps (all platforms/arch/os)
+RUN if [ "$SUITE" = "jammy" ]; then \
         SERIALPORT="libqt6serialport6-dev"; \
         WEBSOCKETS="libqt6websockets6-dev"; \
     else \
         SERIALPORT="qt6-serialport-dev"; \
         WEBSOCKETS="qt6-websockets-dev"; \
     fi; \
-    apt-get -y install qt6-base-dev $SERIALPORT $WEBSOCKETS libqt6sql6-sqlite libxkbcommon-dev libvulkan-dev libgl1-mesa-dev; \
-else \
-    apt-get -y install qtbase5-dev libqt5serialport5-dev libqt5websockets5-dev libqt5sql5-sqlite libqt5svg5-dev; \
-fi
-
-# install general deps (all platforms/arch/os)
-RUN apt-get -y install \
+    apt-get -y install \
+    qt6-base-dev \
+    $SERIALPORT \
+    $WEBSOCKETS \
+    libqt6sql6-sqlite \
+    libxkbcommon-dev \
+    libvulkan-dev \
+    libgl1-mesa-dev \
     devscripts \
     fakeroot \
     debhelper \
@@ -74,9 +72,6 @@ RUN git config --system --add safe.directory /source
 # install X11/XCB on Ubuntu for all arch and on Debian for amd64
 # install libraspberrypi-dev on Debian for arm64/armhf
 RUN if [ "$DIST" = "ubuntu" ] || [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
-    if [ "$QT_VERSION" = "5" ]; then \
-        apt-get -y install libqt5x11extras5-dev; \
-    fi; \
     apt-get -y install libxcb-util0-dev libxcb-randr0-dev libxcb-shm0-dev libxcb-render0-dev libxcb-image0-dev libxrandr-dev libxrender-dev; \
 elif [ "$TARGETPLATFORM" = "linux/arm64" ] || [ "$TARGETPLATFORM" = "linux/arm/v7" ] && [ "$SUITE" != "trixie" ]; then \
     apt-get -y install wget gpg dirmngr gpg-agent; \

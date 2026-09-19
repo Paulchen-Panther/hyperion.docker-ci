@@ -1,6 +1,5 @@
 ARG DIST="fedora"
 ARG SUITE="42"
-ARG QT_VERSION="6"
 ARG REPOSITORY="https://github.com/hyperion-project"
 ARG CMAKE_VERSION="4.4.3"
 
@@ -8,7 +7,6 @@ FROM ${DIST}:${SUITE}
 
 ARG DIST
 ARG SUITE
-ARG QT_VERSION
 ARG REPOSITORY
 ARG CMAKE_VERSION
 ARG TARGETPLATFORM
@@ -19,16 +17,13 @@ ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 # update
 RUN dnf -y update
 
-# install qt5 or qt6
-RUN if [ "$QT_VERSION" = "6" ]; then \
-    dnf -y install qt6-qtbase-devel qt6-qtserialport-devel qt6-qtwebsockets-devel libxkbcommon-devel; \
-else \
-    dnf -y install qt5-qtbase-devel qt5-qtserialport-devel qt5-qtwebsockets-devel qt5-qtx11extras-devel; \
-fi
-
 # install general deps
 RUN dnf -y group install 'development-tools' 'c-development' 'rpm-development-tools' && \
     dnf -y install \
+    qt6-qtbase-devel \
+    qt6-qtserialport-devel \
+    qt6-qtwebsockets-devel \
+    libxkbcommon-devel \
     ninja-build \
     curl \
     fedora-packager \

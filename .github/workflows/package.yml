@@ -67,7 +67,7 @@ jobs:
             description: Fedora 45
             target_platform: "['amd64', 'arm64']"
 
-    uses: ./.github/workflows/qt5_6.yml
+    uses: ./.github/workflows/qt6.yml
     secrets: inherit
     with:
       distribution: ${{ matrix.os.distribution }}

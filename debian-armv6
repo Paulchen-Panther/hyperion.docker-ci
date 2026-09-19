@@ -10,10 +10,12 @@ ARG INSTALL_STAGING
 
 RUN --security=insecure \
     apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates curl gpg mmdebstrap qemu-user-static && \
+    apt-get install -y --no-install-recommends ca-certificates curl gpg mmdebstrap arch-test qemu-user-static && \
     echo "deb [signed-by=/usr/share/keyrings/raspbian-archive-keyring.gpg] http://archive.raspbian.org/raspbian/ ${SUITE} main" > /tmp/sources.list && \
     echo "deb [signed-by=/usr/share/keyrings/raspberrypi-archive-keyring.gpg] http://archive.raspberrypi.org/debian/ ${SUITE} main" >> /tmp/sources.list && \
-    [ "$SUITE" = "forky" ] || (echo "deb [signed-by=/usr/share/keyrings/raspbian-archive-keyring.gpg] http://archive.raspbian.org/raspbian/ ${SUITE}-staging main" >> /tmp/sources.list) && \
+    if curl -fsSL "http://archive.raspbian.org/raspbian/dists/${SUITE}/Release" | grep -qx "Suite: testing"; then \
+        echo "deb [signed-by=/usr/share/keyrings/raspbian-archive-keyring.gpg] http://archive.raspbian.org/raspbian/ ${SUITE}-staging main" >> /tmp/sources.list; \
+    fi && \
     mmdebstrap --architectures=armhf --variant=minbase --include=gpgv \
         --setup-hook='mkdir -p "$1/usr/share/keyrings"' \
         --setup-hook='curl -fsSL https://archive.raspbian.org/raspbian.public.key | gpg --dearmor > "$1/usr/share/keyrings/raspbian-archive-keyring.gpg"' \

@@ -6,21 +6,16 @@ ARG CMAKE_VERSION="3.28.3"
 # Base image with the Raspbian rootfs
 FROM --platform=$BUILDPLATFORM debian:${SUITE}-slim AS raspbian-base
 ARG SUITE
-ARG INSTALL_STAGING
 
 RUN --security=insecure \
-    apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates curl gpg mmdebstrap arch-test qemu-user-static && \
-    echo "deb [signed-by=/usr/share/keyrings/raspbian-archive-keyring.gpg] http://archive.raspbian.org/raspbian/ ${SUITE} main" > /tmp/sources.list && \
-    echo "deb [signed-by=/usr/share/keyrings/raspberrypi-archive-keyring.gpg] http://archive.raspberrypi.org/debian/ ${SUITE} main" >> /tmp/sources.list && \
+    apt-get update && apt-get install -y --no-install-recommends ca-certificates debootstrap qemu-user-static curl && \
+    debootstrap --no-check-gpg --arch="armhf" --include="gpgv" --variant="minbase" "${SUITE}" /tmp/rootfs "http://archive.raspbian.org/raspbian/" || { cat /tmp/rootfs/debootstrap/debootstrap.log; exit 1; } && \
+    echo 'APT::Key::GPGVCommand "/usr/bin/gpgv";' > /tmp/rootfs/etc/apt/apt.conf.d/99use-gpgv-not-sqv && \
+    echo "deb [trusted=yes] http://archive.raspberrypi.org/debian/ ${SUITE} main" > /tmp/rootfs/etc/apt/sources.list.d/raspi.list && \
     if curl -fsSL "http://archive.raspbian.org/raspbian/dists/${SUITE}/Release" | grep -qx "Suite: testing"; then \
-        echo "deb [signed-by=/usr/share/keyrings/raspbian-archive-keyring.gpg] http://archive.raspbian.org/raspbian/ ${SUITE}-staging main" >> /tmp/sources.list; \
+        echo "deb [trusted=yes] http://archive.raspbian.org/raspbian/ ${SUITE}-staging main" >> /tmp/rootfs/etc/apt/sources.list.d/raspi.list; \
     fi && \
-    mmdebstrap --architectures=armhf --variant=minbase --include=gpgv \
-        --setup-hook='mkdir -p "$1/usr/share/keyrings"' \
-        --setup-hook='curl -fsSL https://archive.raspbian.org/raspbian.public.key | gpg --dearmor > "$1/usr/share/keyrings/raspbian-archive-keyring.gpg"' \
-        --setup-hook='curl -fsSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor > "$1/usr/share/keyrings/raspberrypi-archive-keyring.gpg"' \
-        "${SUITE}" /tmp/rootfs /tmp/sources.list
+    chroot /tmp/rootfs apt-get update
 
 # Final image
 FROM scratch
@@ -32,8 +27,6 @@ ARG CMAKE_VERSION
 ARG DEBIAN_FRONTEND=noninteractive
 
 ENV QEMU_EXECVE=1
-
-RUN apt-get update
 
 # install qt5 or qt6 (qt6 is not available on debian buster/bullseye)
 RUN if ([ "$SUITE" = "bookworm" ] || [ "$SUITE" = "trixie" ] || [ "$SUITE" = "forky" ]) && [ "$QT_VERSION" = "6" ]; then \

@@ -9,12 +9,12 @@ ARG SUITE
 
 RUN --security=insecure \
     apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gpg debootstrap qemu-user-static && \
-    curl -fsSL https://archive.raspbian.org/raspbian.public.key | gpg --dearmor > "/tmp/raspbian.gpg" && \
-    curl -fsSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor > "/tmp/raspberrypi.gpg" && \
+    curl -fsSL https://archive.raspbian.org/raspbian.public.key | gpg --dearmor > /tmp/raspbian.gpg && \
+    curl -fsSL https://archive.raspberrypi.org/debian/raspberrypi.gpg.key | gpg --dearmor > /tmp/raspberrypi.gpg && \
+    STAGING_SUITES=$(curl -fsSL "http://archive.raspbian.org/raspbian/dists/${SUITE}/Release" -o /tmp/release && { grep -qx "Suite: testing" /tmp/release && echo "--extra-suites=${SUITE}-staging" || true; }) && \
+    debootstrap --keyring=/tmp/raspbian.gpg --arch="armhf" --variant="minbase" ${STAGING_SUITES} "${SUITE}" /tmp/rootfs "http://archive.raspbian.org/raspbian/" && \
     install -D -m 0644 /tmp/raspbian.gpg /tmp/rootfs/etc/apt/trusted.gpg.d/raspbian-archive-keyring.gpg && \
     install -D -m 0644 /tmp/raspberrypi.gpg /tmp/rootfs/usr/share/keyrings/raspberrypi-archive-keyring.gpg && \
-    STAGING_SUITES=$(curl -fsSL "http://archive.raspbian.org/raspbian/dists/${SUITE}/Release" -o /tmp/release && { grep -qx "Suite: testing" /tmp/release && echo "--extra-suites=${SUITE}-staging" || true; }) && \
-    debootstrap --keyring=/etc/apt/trusted.gpg.d/raspbian-archive-keyring.gpg --arch="armhf" --variant="minbase" ${STAGING_SUITES} "${SUITE}" /tmp/rootfs "http://archive.raspbian.org/raspbian/" && \
     echo "deb [signed-by=/usr/share/keyrings/raspberrypi-archive-keyring.gpg] http://archive.raspberrypi.org/debian/ ${SUITE} main" > /tmp/rootfs/etc/apt/sources.list.d/raspi.list && \
     chroot /tmp/rootfs apt-get update
 

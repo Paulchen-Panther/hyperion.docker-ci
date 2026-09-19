@@ -1,8 +1,8 @@
 ARG DIST="debian"
-ARG SUITE="bullseye"
+ARG SUITE="bookworm"
 ARG QT_VERSION="6"
 ARG REPOSITORY="https://github.com/hyperion-project"
-ARG CMAKE_VERSION="3.28.3"
+ARG CMAKE_VERSION="4.4.3"
 ARG DEBIAN_FRONTEND=noninteractive
 
 FROM ${DIST}:${SUITE}
@@ -23,15 +23,15 @@ ENV DEBEMAIL="admin@hyperion-project.org"
 # update
 RUN apt-get update
 
-# install qt5 or qt6 (qt6 is not available on ubuntu focal and debian buster)
-# on debian bullseye add backports to install qt6
-RUN if [ "$SUITE" != "buster" ] && [ "$SUITE" != "focal" ] && [ "$QT_VERSION" = "6" ]; then \
-    if [ "$SUITE" = "bullseye" ]; then \
-        echo "deb http://archive.debian.org/debian bullseye-backports main contrib non-free" | tee -a /etc/apt/sources.list; \
-        apt-get update; \
+# install qt5 or qt6
+RUN if [ "$QT_VERSION" = "6" ]; then \
+    if [ "$SUITE" = "jammy" ]; then \
+        SERIALPORT="libqt6serialport6-dev"; \
+        WEBSOCKETS="libqt6websockets6-dev"; \
+    else \
+        SERIALPORT="qt6-serialport-dev"; \
+        WEBSOCKETS="qt6-websockets-dev"; \
     fi; \
-    if [ "$SUITE" = "jammy" ]; then SERIALPORT="libqt6serialport6-dev"; else SERIALPORT="qt6-serialport-dev"; fi; \
-    if [ "$SUITE" = "jammy" ]; then WEBSOCKETS="libqt6websockets6-dev"; else WEBSOCKETS="qt6-websockets-dev"; fi; \
     apt-get -y install qt6-base-dev $SERIALPORT $WEBSOCKETS libqt6sql6-sqlite libxkbcommon-dev libvulkan-dev libgl1-mesa-dev; \
 else \
     apt-get -y install qtbase5-dev libqt5serialport5-dev libqt5websockets5-dev libqt5sql5-sqlite libqt5svg5-dev; \

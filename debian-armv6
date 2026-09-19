@@ -1,7 +1,7 @@
 # Default values for build arguments
-ARG SUITE=bullseye
+ARG SUITE=bookworm
 ARG QT_VERSION=6
-ARG CMAKE_VERSION="3.28.3"
+ARG CMAKE_VERSION="4.4.3"
 
 # Base image with the Raspbian rootfs
 FROM --platform=$BUILDPLATFORM debian:${SUITE}-slim AS raspbian-base
@@ -29,8 +29,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 ENV QEMU_EXECVE=1
 
-# install qt5 or qt6 (qt6 is not available on debian buster/bullseye)
-RUN if ([ "$SUITE" = "bookworm" ] || [ "$SUITE" = "trixie" ] || [ "$SUITE" = "forky" ]) && [ "$QT_VERSION" = "6" ]; then \
+# install qt5 or qt6
+RUN if [ "$QT_VERSION" = "6" ]; then \
     apt-get -y install qt6-base-dev libqt6sql6-sqlite qt6-serialport-dev qt6-websockets-dev libxkbcommon-dev libvulkan-dev libgl1-mesa-dev; \
 else \
     apt-get -y install qtbase5-dev libqt5serialport5-dev libqt5websockets5-dev libqt5sql5-sqlite libqt5svg5-dev; \

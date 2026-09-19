@@ -1,8 +1,8 @@
 ARG DIST="fedora"
-ARG SUITE="39"
+ARG SUITE="42"
 ARG QT_VERSION="6"
 ARG REPOSITORY="https://github.com/hyperion-project"
-ARG CMAKE_VERSION="3.28.3"
+ARG CMAKE_VERSION="4.4.3"
 
 FROM ${DIST}:${SUITE}
 

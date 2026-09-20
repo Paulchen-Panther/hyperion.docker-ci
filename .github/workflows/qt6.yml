@@ -33,7 +33,7 @@ jobs:
 
   build_and_push:
     name: 👷 Build ${{ matrix.target_platform }}
-runs-on: ${{ matrix.target_platform == 'riscv64' && 'ubuntu-24.04-riscv' || (contains(fromJson('["arm64","armv6","armv7"]'), matrix.target_platform) && 'ubuntu-24.04-arm' || 'ubuntu-24.04') }}
+    runs-on: ${{ matrix.target_platform == 'riscv64' && 'ubuntu-24.04-riscv' || (contains(fromJson('["arm64","armv6","armv7"]'), matrix.target_platform) && 'ubuntu-24.04-arm' || 'ubuntu-24.04') }}
     strategy:
       fail-fast: false
       matrix:

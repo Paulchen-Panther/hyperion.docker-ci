@@ -16,11 +16,18 @@ on:
         type: string
         default: "['amd64']"
         required: false
+      qemu_version:
+        type: string
+        required: false
+      cmake_version:
+        type: string
+        required: false
 
 env:
+  QEMU_VERSION: ${{ inputs.qemu_version }}
+  CMAKE_VERSION: ${{ inputs.cmake_version }}
   SECRET_DOCKER_CI: ${{ secrets.DOCKER_CI }}
   REPOSITORY: hyperion-project
-  CMAKE_VERSION: 4.4.3
 
 jobs:
 
@@ -91,6 +98,7 @@ jobs:
             SUITE=${{ inputs.codename }}
             REPOSITORY="${{ env.REPOSITORY }}"
             CMAKE_VERSION=${{ env.CMAKE_VERSION }}
+            QEMU_VERSION=${{ env.QEMU_VERSION }}
 
       - name: ⬇ Export digest
         run: |

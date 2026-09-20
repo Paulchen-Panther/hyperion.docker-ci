@@ -9,13 +9,16 @@ on:
   push:
     branches: [ master ]
 
+env:
+  QEMU_VERSION: 11.1.1
+  CMAKE_VERSION: 4.4.3
+  REPOSITORY: hyperion-project
+  SECRET_DOCKER_CI: ${{ secrets.DOCKER_CI }}
+
 jobs:
 
   build_qemu:
     name: 🐧 Build QEMU
-    env:
-      SECRET_DOCKER_CI: ${{ secrets.DOCKER_CI }}
-      REPOSITORY: hyperion-project
     runs-on: ubuntu-latest
     steps:
       - name: 👀 Checkout
@@ -42,15 +45,15 @@ jobs:
         with:
           context: .
           file: qemu
-          target: qemu
           platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
-          tags: qemu
+          tags: ghcr.io/${{ env.REPOSITORY }}/qemu:${{ env.QEMU_VERSION }}
           labels: org.opencontainers.image.source=https://github.com/${{ env.REPOSITORY }}
           provenance: mode=max
           sbom: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: QEMU_VERSION=${{ env.QEMU_VERSION }}
 
   build_matrix:
     name: 🐧 ${{ matrix.os.description }}
@@ -88,13 +91,13 @@ jobs:
       distribution: ${{ matrix.os.distribution }}
       codename: ${{ matrix.os.codename }}
       target_platform: ${{ matrix.os.target_platform }}
+      qemu_version: ${{ env.QEMU_VERSION }}
+      cmake_version: ${{ env.CMAKE_VERSION }}
 
   cleanup:
     name: 🧹 Cleanup untagged images
     needs: build_matrix
     if: ${{ needs.build_matrix.result == 'success' }}
-    env:
-      SECRET_DOCKER_CI: ${{ secrets.DOCKER_CI }}
     runs-on: ubuntu-latest
     steps:
       - name: 🐳 Set up Docker Buildx

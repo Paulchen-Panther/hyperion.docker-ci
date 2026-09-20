@@ -2,14 +2,12 @@ ARG DIST="fedora"
 ARG SUITE="42"
 ARG REPOSITORY="hyperion-project"
 ARG CMAKE_VERSION="4.4.3"
+ARG QEMU_VERSION="11.1.1"
 
-FROM --platform=linux/amd64 ghcr.io/${REPOSITORY}/hyperion.docker-ci:qemu AS qemu-bin
+FROM --platform=linux/amd64 ghcr.io/${REPOSITORY}/qemu:${QEMU_VERSION} AS qemu-bin
 
 FROM ${DIST}:${SUITE}
 
-ARG DIST
-ARG SUITE
-ARG REPOSITORY
 ARG CMAKE_VERSION
 ARG TARGETPLATFORM
 

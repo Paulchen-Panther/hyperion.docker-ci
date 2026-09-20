@@ -17,8 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - target: [ arm, aarch64, riscv64 ]
+        target: [ arm, aarch64, riscv64 ]
 
     steps:
       - name: Checkout

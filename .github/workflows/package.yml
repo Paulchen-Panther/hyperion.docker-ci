@@ -36,7 +36,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.DOCKER_CI }}
 
-      - name: 👷 Build and 🚀 Push digest to GitHub Container/Package Registry
+      - name: 👷 Build and 🚀 Push
         id: build
         uses: docker/build-push-action@v7
         with:

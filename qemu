@@ -41,7 +41,7 @@ RUN curl -fsSLO "https://download.qemu.org/qemu-${QEMU_VERSION}.tar.xz" && \
           --disable-guest-agent \
           --disable-plugins \
           --disable-download && \
-     ninja -j"$(nproc)" && \
+     ninja -j"$(nproc)" qemu-arm qemu-aarch64 qemu-riscv64 && \
      mkdir /out && find /build -maxdepth 1 -type f -executable -name 'qemu-*' -exec sh -c 'for f; do strip -o "/out/$(basename "$f")" "$f"; done' sh {} + && \
      test -n "$(ls -A /out)"
 

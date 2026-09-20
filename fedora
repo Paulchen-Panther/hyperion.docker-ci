@@ -30,7 +30,7 @@ RUN dnf -y group install 'development-tools' 'c-development' 'rpm-development-to
     python3-jsonschema \
     python3-jinja2 \
     libXrandr-devel \
-    xcb-util-image-devel \^
+    xcb-util-image-devel \
     turbojpeg-devel \
     libjpeg-turbo-devel \
     libusb1-devel \

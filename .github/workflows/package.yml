@@ -6,29 +6,38 @@ run-name: |
 on:
   schedule:
     - cron: '0 0 * * 0'
-  push:
-    branches: [ master ]
+  # push:
+  #   branches: [ master ]
 
 jobs:
 
-  ubuntu_debian_fedora:
+  build_matrix:
     name: 🐧 ${{ matrix.os.description }}
     strategy:
       fail-fast: false
       matrix:
         os: [
-          { distribution: ubuntu, codename: jammy,    description: Ubuntu 22.04 LTS (Jammy Jellyfish),  target_platform: "['amd64', 'arm64', 'armv7', 'riscv64']" },
-          { distribution: ubuntu, codename: noble,    description: Ubuntu 24.04 LTS (Noble Numbat),     target_platform: "['amd64', 'arm64', 'armv7', 'riscv64']" },
-          { distribution: ubuntu, codename: resolute, description: Ubuntu 26.04 LTS (Resolute Raccoon), target_platform: "['amd64', 'arm64', 'armv7', 'riscv64']" },
-          { distribution: ubuntu, codename: stonking, description: Ubuntu 26.10 (Stonking Stingray),    target_platform: "['amd64', 'arm64', 'armv7', 'riscv64']" },
-          { distribution: debian, codename: bookworm, description: Debian 12.x (Bookworm),              target_platform: "['amd64', 'arm64', 'armv6', 'armv7']" },
-          { distribution: debian, codename: trixie,   description: Debian 13.x (Trixie),                target_platform: "['amd64', 'arm64', 'armv6', 'armv7']" },
-          { distribution: debian, codename: forky,    description: Debian 14.x (Forky),                 target_platform: "['amd64', 'arm64', 'armv6', 'armv7']" },
-          { distribution: fedora, codename: 42,       description: Fedora 42,                           target_platform: "['amd64', 'arm64']" },
-          { distribution: fedora, codename: 43,       description: Fedora 43,                           target_platform: "['amd64', 'arm64']" },
-          { distribution: fedora, codename: 44,       description: Fedora 44,                           target_platform: "['amd64', 'arm64']" },
-          { distribution: fedora, codename: 45,       description: Fedora 45,                           target_platform: "['amd64', 'arm64']" },
-          { distribution: fedora, codename: 46,       description: Fedora 46,                           target_platform: "['amd64', 'arm64']" }
+          # Ubuntu
+          { distribution: ubuntu,   codename: jammy,       description: Ubuntu 22.04 LTS (Jammy Jellyfish),  target_platform: "['amd64', 'arm64', 'armv7', 'riscv64']" },
+          { distribution: ubuntu,   codename: noble,       description: Ubuntu 24.04 LTS (Noble Numbat),     target_platform: "['amd64', 'arm64', 'armv7', 'riscv64']" },
+          { distribution: ubuntu,   codename: resolute,    description: Ubuntu 26.04 LTS (Resolute Raccoon), target_platform: "['amd64', 'arm64', 'armv7', 'riscv64']" },
+          { distribution: ubuntu,   codename: stonking,    description: Ubuntu 26.10 (Stonking Stingray),    target_platform: "['amd64', 'arm64', 'armv7', 'riscv64']" },
+
+          # Debian
+          { distribution: debian,   codename: bookworm,    description: Debian 12.x (Bookworm),              target_platform: "['amd64', 'arm64', 'armv6', 'armv7']" },
+          { distribution: debian,   codename: trixie,      description: Debian 13.x (Trixie),                target_platform: "['amd64', 'arm64', 'armv6', 'armv7', 'riscv64']" },
+          { distribution: debian,   codename: forky,       description: Debian 14.x (Forky),                 target_platform: "['amd64', 'arm64', 'armv6', 'armv7', 'riscv64']" },
+
+          # Fedora
+          { distribution: fedora,   codename: 42,          description: Fedora 42,                           target_platform: "['amd64', 'arm64']" },
+          { distribution: fedora,   codename: 43,          description: Fedora 43,                           target_platform: "['amd64', 'arm64']" },
+          { distribution: fedora,   codename: 44,          description: Fedora 44,                           target_platform: "['amd64', 'arm64']" },
+          { distribution: fedora,   codename: 45,          description: Fedora 45,                           target_platform: "['amd64', 'arm64']" },
+          { distribution: fedora,   codename: 46,          description: Fedora 46,                           target_platform: "['amd64', 'arm64']" },
+
+          # openSUSE
+          # { distribution: opensuse, codename: leap,        description: openSUSE Leap,                       target_platform: "['amd64', 'arm64']" },
+          # { distribution: opensuse, codename: tumbleweed,  description: openSUSE Tumbleweed,                 target_platform: "['amd64', 'arm64']" },
         ]
 
     uses: ./.github/workflows/qt6.yml
@@ -40,8 +49,8 @@ jobs:
 
   cleanup:
     name: 🧹 Cleanup untagged images
-    needs: ubuntu_debian_fedora
-    if: ${{ needs.ubuntu_debian_fedora.result == 'success' }}
+    needs: build_matrix
+    if: ${{ needs.build_matrix.result == 'success' }}
     env:
       SECRET_DOCKER_CI: ${{ secrets.DOCKER_CI }}
     runs-on: ubuntu-latest

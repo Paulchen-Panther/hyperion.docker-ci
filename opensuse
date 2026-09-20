@@ -30,31 +30,24 @@ RUN zypper -n install \
     curl \
     tar \
     gzip \
-    pkg-config \
+    pkgconf-pkg-config \
     python3-devel \
-    python3-jsonschema \
-    python3-Jinja2 \
-    openssl-devel \
+    libopenssl-devel \
     libXrandr-devel \
     xcb-util-devel \
     xcb-util-image-devel \
-    libturbojpeg-devel \
-    libjpeg-turbo-devel \
+    libjpeg8-devel \
     libusb-1_0-devel \
     avahi \
     avahi-compat-mDNSResponder-devel \
     dbus-1-devel \
     protobuf-devel \
-    protobuf-compiler \
     flatbuffers-devel \
-    flatbuffers-compiler \
     mbedtls-devel \
     libcec-devel \
     alsa-devel \
-    libftdi-devel \
     systemd-devel \
     libdrm-devel \
-    libatomic \
     pipewire-devel \
     rpm-build \
     rpmdevtools

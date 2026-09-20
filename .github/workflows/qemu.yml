@@ -52,6 +52,11 @@ jobs:
             --disable-plugins \
             --disable-download
           ninja -C . -j"$(nproc)" "qemu-${{ matrix.target }}"
+          bin="build/qemu-${{ matrix.target }}"
+          file "$bin"
+          file "$bin" | grep -Eq "statically linked|static-pie linked"
+          "$bin" --version | tee /dev/stderr | grep -F "${QEMU_VERSION}"
+          "$bin" --help | grep -F -- "-execve"
 
       - name: Paket erstellen
         run: |
@@ -63,12 +68,12 @@ jobs:
           tar -C dist -cJf "${pkg}.tar.xz" "${name}"
           sha256sum "${pkg}.tar.xz" | tee "${pkg}.tar.xz.sha256"
 
-      - name: Artefakt hochladen
-        uses: actions/upload-artifact@v4
-        with:
-          name: qemu-${{ matrix.target }}-${{ matrix.host }}
-          path: qemu-*.tar.xz
-          if-no-files-found: error
+      # - name: Artefakt hochladen
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: qemu-${{ matrix.target }}
+      #     path: qemu-*.tar.xz
+      #     if-no-files-found: error
 
   # release:
   #   name: GitHub-Release

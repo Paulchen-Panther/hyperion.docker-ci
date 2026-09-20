@@ -11,7 +11,6 @@ on:
 
 env:
   QEMU_VERSION: 11.1.1
-  CMAKE_VERSION: 4.4.3
   REPOSITORY: hyperion-project
   SECRET_DOCKER_CI: ${{ secrets.DOCKER_CI }}
 
@@ -20,6 +19,8 @@ jobs:
   build_qemu:
     name: 🐧 Build QEMU
     runs-on: ubuntu-latest
+    outputs:
+      QEMU_VERSION: ${{ env.QEMU_VERSION }}
     steps:
       - name: 👀 Checkout
         uses: actions/checkout@v7
@@ -91,8 +92,8 @@ jobs:
       distribution: ${{ matrix.os.distribution }}
       codename: ${{ matrix.os.codename }}
       target_platform: ${{ matrix.os.target_platform }}
-      qemu_version: ${{ env.QEMU_VERSION }}
-      cmake_version: ${{ env.CMAKE_VERSION }}
+      qemu_version: ${{ needs.build_qemu.outputs.QEMU_VERSION }}
+      cmake_version: 4.4.3
 
   cleanup:
     name: 🧹 Cleanup untagged images

@@ -17,40 +17,40 @@ ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 RUN zypper -n refresh && zypper -n update
 
 # Build dependencies
-RUN zypper -n install \
-    qt6-base-devel \
-    qt6-serialport-devel \
-    qt6-websockets-devel \
-    libxkbcommon-devel \
-    vulkan-headers \
-    gcc \
-    gcc-c++ \
-    make \
-    ninja \
-    curl \
-    tar \
-    gzip \
-    pkgconf-pkg-config \
-    python3-devel \
-    libopenssl-devel \
-    libXrandr-devel \
-    xcb-util-devel \
-    xcb-util-image-devel \
-    libjpeg8-devel \
-    libusb-1_0-devel \
-    avahi \
-    avahi-compat-mDNSResponder-devel \
-    dbus-1-devel \
-    protobuf-devel \
-    flatbuffers-devel \
-    mbedtls-devel \
-    libcec-devel \
-    alsa-devel \
-    systemd-devel \
-    libdrm-devel \
-    pipewire-devel \
-    rpm-build \
-    rpmdevtools
+RUN zypper -n install -t pattern devel_basis devel_C_C++ devel_rpm_build && \
+    zypper -n install --no-recommends \
+        git \
+        ninja \
+        curl \
+        rpm-build \
+        qt6-base-devel \
+        qt6-serialport-devel \
+        qt6-websockets-devel \
+        libxkbcommon-devel \
+        python3-devel \
+        python3-jsonschema \
+        python3-Jinja2 \
+        libXrandr-devel \
+        xcb-util-devel \
+        xcb-util-image-devel \
+        libjpeg8-devel \
+        libturbojpeg0 \
+        libusb-1_0-devel \
+        libavahi-client3 \
+        libavahi-common3 \
+        avahi-compat-mDNSResponder-devel \
+        dbus-1-devel \
+        protobuf-devel \
+        flatbuffers-devel \
+        mbedtls-devel \
+        libopenssl-devel \
+        libcec-devel \
+        alsa-devel \
+        libftdi1-devel \
+        systemd-devel \
+        libdrm-devel \
+        libatomic1 \
+        pipewire-devel
 
 # Mark /source as safe directory for git (used in CI mounts)
 RUN git config --system --add safe.directory /source

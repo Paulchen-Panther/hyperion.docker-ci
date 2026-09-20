@@ -1,9 +1,11 @@
 # Default values for build arguments
 ARG SUITE=bookworm
+ARG REPOSITORY="hyperion-project"
 ARG CMAKE_VERSION="4.4.3"
 
 # Base image with the Raspbian rootfs
 FROM --platform=$BUILDPLATFORM debian:${SUITE}-slim AS raspbian-base
+
 ARG SUITE
 
 RUN --security=insecure \
@@ -25,10 +27,9 @@ FROM scratch
 COPY --from=raspbian-base /tmp/rootfs /
 
 ARG SUITE
+ARG REPOSITORY
 ARG CMAKE_VERSION
 ARG DEBIAN_FRONTEND=noninteractive
-
-ENV QEMU_EXECVE=1
 
 # install deps
 RUN apt-get -y install \
@@ -89,11 +90,7 @@ RUN mkdir -p /tmp/cmake; \
 # Show cmake version
 RUN cmake --version
 
-# download qemu and set exec flag
-RUN curl -kL https://github.com/balena-io/qemu/releases/download/v7.0.0%2Bbalena1/qemu-7.0.0.balena1-arm.tar.gz | tar zxvf - -C . --strip-components 1 && mv qemu-arm-static /usr/bin/qemu-static
-
-# set qemu exec flag
-RUN chmod +x /usr/bin/qemu-static
-
-# set entrypoint
+# Copy qemu and set QEMU_EXECVE / ENTRYPOINT
+COPY --from=ghcr.io/${REPOSITORY}/hyperion.docker-ci:qemu /qemu/qemu-arm /usr/bin/qemu-static
+ENV QEMU_EXECVE=/usr/bin/qemu-static
 ENTRYPOINT [ "/usr/bin/qemu-static" ]

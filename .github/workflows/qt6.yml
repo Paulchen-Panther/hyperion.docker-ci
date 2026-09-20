@@ -89,7 +89,7 @@ jobs:
           build-args: |
             DIST=${{ inputs.distribution }}
             SUITE=${{ inputs.codename }}
-            REPOSITORY="${{ github.server_url }}/${{ env.REPOSITORY }}"
+            REPOSITORY="${{ env.REPOSITORY }}"
             CMAKE_VERSION=${{ env.CMAKE_VERSION }}
 
       - name: ⬇ Export digest

@@ -1,0 +1,49 @@
+FROM ubuntu:24.04 AS build
+
+ARG QEMU_VERSION=11.1.1
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+     build-essential \
+     ninja-build \
+     pkg-config \
+     patch \
+     curl \
+     ca-certificates \
+     xz-utils \
+     file \
+     python3 \
+     python3-venv \
+     python3-pip \
+     libglib2.0-dev \
+     libpcre2-dev \
+     zlib1g-dev
+
+WORKDIR /src
+COPY qemu-patches/ /qemu-patches/
+
+RUN curl -fsSLO "https://download.qemu.org/qemu-${QEMU_VERSION}.tar.xz" && \
+     tar -xf "qemu-${QEMU_VERSION}.tar.xz" && \
+     rm "qemu-${QEMU_VERSION}.tar.xz" && \
+     cd "qemu-${QEMU_VERSION}" && \
+     set -- /qemu-patches/*.patch && \
+     test -e "$1" && \
+     for patch in "$@"; do \
+          patch -p1 --no-backup-if-mismatch < "$patch"; \
+     done && \
+     mkdir /build && cd /build && \
+     "/src/qemu-${QEMU_VERSION}/configure" \
+          --static \
+          --target-list=arm-linux-user,aarch64-linux-user,riscv64-linux-user \
+          --disable-system \
+          --disable-tools \
+          --disable-docs \
+          --disable-guest-agent \
+          --disable-plugins \
+          --disable-download && \
+     ninja -j"$(nproc)" && \
+     mkdir /out && find /build -maxdepth 1 -type f -executable -name 'qemu-*' -exec sh -c 'for f; do strip -o "/out/$(basename "$f")" "$f"; done' sh {} + && \
+     && test -n "$(ls -A /out)"
+
+FROM scratch AS qemu
+COPY --from=build /out/ /qemu/

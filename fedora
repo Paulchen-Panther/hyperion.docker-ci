@@ -1,7 +1,9 @@
 ARG DIST="fedora"
 ARG SUITE="42"
-ARG REPOSITORY="https://github.com/hyperion-project"
+ARG REPOSITORY="hyperion-project"
 ARG CMAKE_VERSION="4.4.3"
+
+FROM --platform=linux/amd64 ghcr.io/${REPOSITORY}/hyperion.docker-ci:qemu AS qemu-bin
 
 FROM ${DIST}:${SUITE}
 
@@ -11,7 +13,6 @@ ARG REPOSITORY
 ARG CMAKE_VERSION
 ARG TARGETPLATFORM
 
-ENV QEMU_EXECVE=1
 ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 
 # update
@@ -31,7 +32,7 @@ RUN dnf -y group install 'development-tools' 'c-development' 'rpm-development-to
     python3-jsonschema \
     python3-jinja2 \
     libXrandr-devel \
-    xcb-util-image-devel \
+    xcb-util-image-devel \^
     turbojpeg-devel \
     libjpeg-turbo-devel \
     libusb1-devel \
@@ -52,7 +53,7 @@ RUN dnf -y group install 'development-tools' 'c-development' 'rpm-development-to
     libdrm-devel \
     libatomic \
     pipewire-devel
-    
+
 # Mark /source as safe directory for git (used in CI mounts)
 RUN git config --system --add safe.directory /source
 
@@ -71,20 +72,19 @@ elif [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
 fi
 
 # Show cmake version
-RUN cmake --version 
+RUN cmake --version
 
 # rpmdev-setuptree will create the ~/rpmbuild directory and a set of subdirectories (e.g. SPECS and BUILD)
 RUN rpmdev-setuptree
 
-# download qemu and set exec flag
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-    curl -kL https://github.com/balena-io/qemu/releases/download/v7.0.0%2Bbalena1/qemu-7.0.0.balena1-aarch64.tar.gz | tar zxvf - -C . --strip-components 1 && mv qemu-aarch64-static /usr/bin/qemu-static; \
-else \
-    printf '#!/bin/bash\nexec "$@"' > /usr/bin/qemu-static; \
-fi
+# Copy qemu and set QEMU_EXECVE / ENTRYPOINT
+RUN --mount=from=qemu-bin,source=/qemu,target=/qemu \
+    if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+        cp /qemu/qemu-aarch64 /usr/bin/qemu-static; \
+    else \
+        printf '#!/bin/sh\nexec "$@"\n' > /usr/bin/qemu-static; \
+    fi && \
+    chmod +x /usr/bin/qemu-static
 
-# set qemu exec flag
-RUN chmod +x /usr/bin/qemu-static
-
-# set entrypoint
+ENV QEMU_EXECVE=/usr/bin/qemu-static
 ENTRYPOINT [ "/usr/bin/qemu-static" ]

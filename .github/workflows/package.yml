@@ -17,7 +17,7 @@ env:
 jobs:
 
   build_qemu:
-    name: 🐧 Build QEMU v${{ env.QEMU_VERSION }}
+    name: 🐧 Build QEMU
     runs-on: ubuntu-latest
     outputs:
       QEMU_VERSION: ${{ env.QEMU_VERSION }}

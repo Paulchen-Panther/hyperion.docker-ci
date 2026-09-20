@@ -52,9 +52,8 @@ jobs:
             --disable-plugins \
             --disable-download
           ninja -C . -j"$(nproc)" "$name"
-          bin="./${name}"
-          file "$bin" | grep -Eq "statically linked|static-pie linked"
-          "$bin" --help
+          file "./${name}" | grep -Eq "statically linked|static-pie linked"
+          "./${name}" -h
 
       - name: Paket erstellen
         run: |

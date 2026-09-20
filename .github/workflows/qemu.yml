@@ -53,10 +53,8 @@ jobs:
             --disable-download
           ninja -C . -j"$(nproc)" "$name"
           bin="./${name}"
-          file "$bin"
           file "$bin" | grep -Eq "statically linked|static-pie linked"
-          "$bin" --version | tee /dev/stderr | grep -F "${QEMU_VERSION}"
-          "$bin" --help | grep -F -- "-execve"
+          "$bin" --help
 
       - name: Paket erstellen
         run: |

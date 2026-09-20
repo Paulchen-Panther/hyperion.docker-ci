@@ -40,8 +40,8 @@ jobs:
       - name: Build QEMU
         run: |
           set -euo pipefail
-          mkdir build
-          cd build
+          bin="qemu-${{ matrix.target }}"
+          mkdir build && cd build
           "../qemu-${QEMU_VERSION}/configure" \
             --static \
             --target-list="${{ matrix.target }}-linux-user" \
@@ -51,8 +51,7 @@ jobs:
             --disable-guest-agent \
             --disable-plugins \
             --disable-download
-          ninja -C . -j"$(nproc)" "qemu-${{ matrix.target }}"
-          bin="build/qemu-${{ matrix.target }}"
+          ninja -C . -j"$(nproc)" "$bin"
           file "$bin"
           file "$bin" | grep -Eq "statically linked|static-pie linked"
           "$bin" --version | tee /dev/stderr | grep -F "${QEMU_VERSION}"

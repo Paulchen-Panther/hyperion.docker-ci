@@ -4,7 +4,7 @@ ARG REPOSITORY="hyperion-project"
 ARG CMAKE_VERSION="4.4.3"
 ARG QEMU_VERSION="11.1.1"
 
-FROM ghcr.io/${REPOSITORY}/qemu:${QEMU_VERSION} AS qemu-bin
+FROM --platform=$BUILDPLATFORM ghcr.io/${REPOSITORY}/qemu:${QEMU_VERSION} AS qemu-bin
 
 # Base image with the Raspbian rootfs
 FROM --platform=$BUILDPLATFORM debian:${SUITE}-slim AS raspbian-base

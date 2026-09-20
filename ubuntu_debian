@@ -5,7 +5,7 @@ ARG CMAKE_VERSION="4.4.3"
 ARG QEMU_VERSION="11.1.1"
 ARG DEBIAN_FRONTEND=noninteractive
 
-FROM ghcr.io/${REPOSITORY}/qemu:${QEMU_VERSION} AS qemu-bin
+FROM --platform=$BUILDPLATFORM  ghcr.io/${REPOSITORY}/qemu:${QEMU_VERSION} AS qemu-bin
 
 FROM ${DIST}:${SUITE}
 

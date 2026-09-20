@@ -96,7 +96,7 @@ jobs:
           build-args: |
             DIST=${{ inputs.distribution }}
             SUITE=${{ inputs.codename }}
-            REPOSITORY="${{ env.REPOSITORY }}"
+            REPOSITORY=${{ env.REPOSITORY }}
             CMAKE_VERSION=${{ env.CMAKE_VERSION }}
             QEMU_VERSION=${{ env.QEMU_VERSION }}
 

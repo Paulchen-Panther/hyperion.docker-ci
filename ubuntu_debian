@@ -115,6 +115,8 @@ RUN --mount=from=qemu-bin,source=/qemu,target=/qemu \
             cp /qemu/qemu-aarch64 /usr/bin/qemu-static ;; \
         linux/arm/v6|linux/arm/v7) \
             cp /qemu/qemu-arm /usr/bin/qemu-static ;; \
+        linux/riscv64) \
+            cp /qemu/qemu-riscv64 /usr/bin/qemu-static ;; \
         *) \
             printf '#!/bin/sh\nexec "$@"\n' > /usr/bin/qemu-static ;; \
     esac && \

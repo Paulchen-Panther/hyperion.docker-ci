@@ -17,7 +17,7 @@ env:
 jobs:
 
   build_qemu:
-    name: 🐧 Build QEMU
+    name: 🐧 Build QEMU v${{ env.QEMU_VERSION }}
     runs-on: ubuntu-latest
     outputs:
       QEMU_VERSION: ${{ env.QEMU_VERSION }}
@@ -82,8 +82,8 @@ jobs:
           { distribution: fedora,   codename: 46,          description: Fedora 46,                           target_platform: "['amd64', 'arm64']" },
 
           # openSUSE
-          # { distribution: opensuse, codename: leap,        description: openSUSE Leap,                       target_platform: "['amd64', 'arm64']" },
-          # { distribution: opensuse, codename: tumbleweed,  description: openSUSE Tumbleweed,                 target_platform: "['amd64', 'arm64']" },
+          { distribution: opensuse/leap, codename: 16.0,        description: openSUSE Leap,                       target_platform: "['amd64', 'arm64']" },
+          { distribution: opensuse/tumbleweed, codename: latest,  description: openSUSE Tumbleweed,                 target_platform: "['amd64', 'arm64']" },
         ]
 
     uses: ./.github/workflows/qt6.yml

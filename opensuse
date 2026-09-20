@@ -1,5 +1,5 @@
-ARG DIST="fedora"
-ARG SUITE="42"
+ARG DIST="opensuse/leap"
+ARG SUITE="15.6"
 ARG REPOSITORY="hyperion-project"
 ARG CMAKE_VERSION="4.4.3"
 ARG QEMU_VERSION="11.1.1"
@@ -14,43 +14,50 @@ ARG TARGETPLATFORM
 ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 
 # Update
-RUN dnf -y update
+RUN zypper -n refresh && zypper -n update
 
 # Build dependencies
-RUN dnf -y group install 'development-tools' 'c-development' 'rpm-development-tools' && \
-    dnf -y install \
-    qt6-qtbase-devel \
-    qt6-qtserialport-devel \
-    qt6-qtwebsockets-devel \
+RUN zypper -n install \
+    qt6-base-devel \
+    qt6-serialport-devel \
+    qt6-websockets-devel \
     libxkbcommon-devel \
-    ninja-build \
+    vulkan-headers \
+    gcc \
+    gcc-c++ \
+    make \
+    ninja \
     curl \
-    fedora-packager \
+    tar \
+    gzip \
+    pkg-config \
     python3-devel \
     python3-jsonschema \
-    python3-jinja2 \
+    python3-Jinja2 \
+    openssl-devel \
     libXrandr-devel \
-    xcb-util-image-devel \
-    turbojpeg-devel \
-    libjpeg-turbo-devel \
-    libusb1-devel \
-    avahi-libs \
-    avahi-compat-libdns_sd-devel \
     xcb-util-devel \
-    dbus-devel \
+    xcb-util-image-devel \
+    libturbojpeg-devel \
+    libjpeg-turbo-devel \
+    libusb-1_0-devel \
+    avahi \
+    avahi-compat-mDNSResponder-devel \
+    dbus-1-devel \
     protobuf-devel \
     protobuf-compiler \
     flatbuffers-devel \
     flatbuffers-compiler \
     mbedtls-devel \
-    openssl-devel \
     libcec-devel \
-    alsa-lib-devel \
+    alsa-devel \
     libftdi-devel \
     systemd-devel \
     libdrm-devel \
     libatomic \
-    pipewire-devel
+    pipewire-devel \
+    rpm-build \
+    rpmdevtools
 
 # Mark /source as safe directory for git (used in CI mounts)
 RUN git config --system --add safe.directory /source

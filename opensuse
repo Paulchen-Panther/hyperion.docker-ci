@@ -1,12 +1,12 @@
-ARG DIST="opensuse/leap"
-ARG SUITE="15.6"
+ARG DIST="leap"
+ARG SUITE="16.0"
 ARG REPOSITORY="hyperion-project"
 ARG CMAKE_VERSION="4.4.3"
 ARG QEMU_VERSION="11.1.1"
 
 FROM --platform=linux/amd64 ghcr.io/${REPOSITORY}/qemu:${QEMU_VERSION} AS qemu-bin
 
-FROM ${DIST}:${SUITE}
+FROM opensuse/${DIST}:${SUITE}
 
 ARG CMAKE_VERSION
 ARG TARGETPLATFORM

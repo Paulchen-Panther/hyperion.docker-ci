@@ -87,7 +87,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: ${{ matrix.target_platform == 'armv6' && 'debian-armv6' || contains(fromJson('["fedora","opensuse"]'), inputs.distribution) && inputs.distribution || 'ubuntu_debian' }}
+          file: ${{ matrix.target_platform == 'armv6' && 'debian-armv6' || contains(fromJson('["leap","tumbleweed"]'), inputs.distribution) && 'opensuse' || inputs.distribution == 'fedora' && 'fedora' || 'ubuntu_debian' }}
           platforms: ${{ matrix.target_lookup[format('{0}',matrix.target_platform)] }}
           allow: security.insecure
           labels: ${{ steps.meta.outputs.labels }}

@@ -48,7 +48,7 @@ jobs:
           { distribution: fedora, codename: 46,       description: Fedora 46,                           target_platform: "['amd64', 'arm64']" }
         ]
 
-    uses: ./.github/workflows/qt6.yml
+    uses: ./.github/workflows/image.yml
     secrets: inherit
     with:
       distribution: ${{ matrix.os.distribution }}

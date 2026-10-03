@@ -7,8 +7,7 @@ RUN --security=insecure \
     apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gpgv xz-utils debootstrap qemu-user-static && \
     curl -fsSL "https://archive.raspbian.org/raspbian/pool/main/r/raspbian-archive-keyring/raspbian-archive-keyring_20120528.4_all.deb" -o /tmp/r.deb && \
     dpkg-deb -x /tmp/r.deb /tmp/r-key && \
-    STAGING_SUITES=$(curl -fsSL "http://archive.raspbian.org/raspbian/dists/bookworm/Release" -o /tmp/release && { grep -qx "Suite: testing" /tmp/release && echo "--extra-suites=${RASPBIAN_SUITE}-staging" || true; }) && \
-    debootstrap --keyring=/tmp/r-key/usr/share/keyrings/raspbian-archive-keyring.gpg --arch="armhf" --variant="minbase" ${STAGING_SUITES} "${RASPBIAN_SUITE}" /tmp/rootfs "http://archive.raspbian.org/raspbian/" && \
+    debootstrap --keyring=/tmp/r-key/usr/share/keyrings/raspbian-archive-keyring.gpg --arch="armhf" --variant="minbase" "bookworm" /tmp/rootfs "http://archive.raspbian.org/raspbian/" && \
     install -D -m644 /tmp/r-key/usr/share/keyrings/raspbian-archive-keyring.gpg /tmp/rootfs/etc/apt/trusted.gpg.d/raspbian-archive-keyring.gpg && \
     rm -rf /tmp/r.deb /tmp/r-key
  

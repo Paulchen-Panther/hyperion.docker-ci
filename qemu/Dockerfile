@@ -22,13 +22,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
      zlib1g-dev
 
 WORKDIR /src
-COPY qemu/patches/ /qemu/patches/
+COPY patches/ /patches/
 
 RUN curl -fsSLO "https://download.qemu.org/qemu-${QEMU_VERSION}.tar.xz" && \
      tar -xf "qemu-${QEMU_VERSION}.tar.xz" && \
      rm "qemu-${QEMU_VERSION}.tar.xz" && \
      cd "qemu-${QEMU_VERSION}" && \
-     set -- /qemu/patches/*.patch && \
+     set -- /patches/*.patch && \
      test -e "$1" && \
      for patch in "$@"; do \
           patch -p1 --no-backup-if-mismatch < "$patch"; \

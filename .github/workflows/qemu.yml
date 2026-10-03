@@ -1,4 +1,4 @@
-name: Build QEMU
+name: QEMU v${{ inputs.qemu_version }}
 
 on:
   workflow_call:

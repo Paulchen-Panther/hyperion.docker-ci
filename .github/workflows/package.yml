@@ -15,8 +15,8 @@ env:
 
 jobs:
 
-  build_qemu:
-    name: 🐧 Build QEMU
+  build_deps:
+    name: 🐧 Build Dependencies
     uses: ./.github/workflows/qemu.yml
     secrets: inherit
     with:
@@ -24,7 +24,7 @@ jobs:
 
   build_image:
     name: 🐧 ${{ matrix.os.description }}
-    needs: build_qemu
+    needs: build_deps
     strategy:
       fail-fast: false
       matrix:

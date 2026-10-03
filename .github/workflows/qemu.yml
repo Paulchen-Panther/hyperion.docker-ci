@@ -1,0 +1,50 @@
+name: Build QEMU
+
+on:
+  workflow_call:
+    inputs:
+      qemu_version:
+        type: string
+        required: true
+
+env:
+  REPOSITORY: hyperion-project
+  SECRET_DOCKER_CI: ${{ secrets.DOCKER_CI }}
+
+jobs:
+  build_qemu:
+    name: 🐧 Build QEMU
+    runs-on: ubuntu-latest
+    steps:
+      - name: 👀 Checkout
+        uses: actions/checkout@v7
+
+      - name: ✅ Determine current Repository
+        if: ${{ !startsWith(github.repository, env.REPOSITORY) }}
+        run: echo "REPOSITORY=$(echo '${{ github.actor }}' | tr '[:upper:]' '[:lower:]')" >> ${GITHUB_ENV}
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: 🔑 Login to GitHub Container Registry
+        if: ${{ env.SECRET_DOCKER_CI != null }}
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.DOCKER_CI }}
+
+      - name: 👷 Build and 🚀 Push
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: ./qemu
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ghcr.io/${{ env.REPOSITORY }}/qemu:latest
+          labels: org.opencontainers.image.source=https://github.com/${{ env.REPOSITORY }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: QEMU_VERSION=${{ inputs.qemu_version }}

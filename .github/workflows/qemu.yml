@@ -1,4 +1,4 @@
-name: QEMU v${{ inputs.qemu_version }}
+name: QEMU Build
 
 on:
   workflow_call:
@@ -13,7 +13,7 @@ env:
 
 jobs:
   build_qemu:
-    name: 🐧 Build QEMU
+    name: QEMU v${{ inputs.qemu_version }}
     runs-on: ubuntu-latest
     steps:
       - name: 👀 Checkout
@@ -34,7 +34,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.DOCKER_CI }}
 
-      - name: 👷 Build and 🚀 Push
+      - name: 👷 Build and 🚀 Push to GitHub Container/Package Registry
         id: build
         uses: docker/build-push-action@v7
         with:

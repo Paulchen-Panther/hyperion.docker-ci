@@ -1,21 +1,21 @@
 ARG DIST="debian"
-ARG SUITE="bullseye"
+ARG SUITE="bookworm"
 ARG QT_VERSION="6"
-ARG REPOSITORY="https://github.com/hyperion-project"
+ARG REPOSITORY="hyperion-project"
 ARG CMAKE_VERSION="3.28.3"
 ARG DEBIAN_FRONTEND=noninteractive
+
+FROM --platform=linux/amd64 ghcr.io/${REPOSITORY}/qemu:latest AS qemu-bin
 
 FROM ${DIST}:${SUITE}
 
 ARG DIST
 ARG SUITE
 ARG QT_VERSION
-ARG REPOSITORY
 ARG CMAKE_VERSION
 ARG DEBIAN_FRONTEND
 ARG TARGETPLATFORM
 
-ENV QEMU_EXECVE=1
 ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 ENV DEBFULLNAME="Hyperion Project"
 ENV DEBEMAIL="admin@hyperion-project.org"
@@ -23,13 +23,8 @@ ENV DEBEMAIL="admin@hyperion-project.org"
 # update
 RUN apt-get update
 
-# install qt5 or qt6 (qt6 is not available on ubuntu focal and debian buster)
-# on debian bullseye add backports to install qt6
-RUN if [ "$SUITE" != "buster" ] && [ "$SUITE" != "focal" ] && [ "$QT_VERSION" = "6" ]; then \
-    if [ "$SUITE" = "bullseye" ]; then \
-        echo "deb http://archive.debian.org/debian bullseye-backports main contrib non-free" | tee -a /etc/apt/sources.list; \
-        apt-get update; \
-    fi; \
+# install qt5 or qt6
+RUN if [ "$QT_VERSION" = "6" ]; then \
     if [ "$SUITE" = "jammy" ]; then SERIALPORT="libqt6serialport6-dev"; else SERIALPORT="qt6-serialport-dev"; fi; \
     if [ "$SUITE" = "jammy" ]; then WEBSOCKETS="libqt6websockets6-dev"; else WEBSOCKETS="qt6-websockets-dev"; fi; \
     apt-get -y install qt6-base-dev $SERIALPORT $WEBSOCKETS libqt6sql6-sqlite libxkbcommon-dev libvulkan-dev libgl1-mesa-dev; \
@@ -112,20 +107,19 @@ fi
 # Show cmake version
 RUN cmake --version 
 
-# download qemu
-RUN if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-    curl -kL https://github.com/balena-io/qemu/releases/download/v7.0.0%2Bbalena1/qemu-7.0.0.balena1-aarch64.tar.gz | tar zxvf - -C . --strip-components 1 && mv qemu-aarch64-static /usr/bin/qemu-static; \
-elif [ "$TARGETPLATFORM" = "linux/arm/v6" ] || [ "$TARGETPLATFORM" = "linux/arm/v7" ]; then \
-    curl -kL https://github.com/balena-io/qemu/releases/download/v7.0.0%2Bbalena1/qemu-7.0.0.balena1-arm.tar.gz | tar zxvf - -C . --strip-components 1 && mv qemu-arm-static /usr/bin/qemu-static; \
-else \
-    printf '#!/bin/bash\nexec "$@"' > /usr/bin/qemu-static; \
-fi
+# Copy qemu and set QEMU_EXECVE / ENTRYPOINT
+RUN --mount=from=qemu-bin,source=/qemu,target=/qemu \
+    case "$TARGETPLATFORM" in \
+        linux/arm64) \
+            cp /qemu/qemu-aarch64 /usr/bin/qemu-static ;; \
+        linux/arm/v6|linux/arm/v7) \
+            cp /qemu/qemu-arm /usr/bin/qemu-static ;; \
+        linux/riscv64) \
+            cp /qemu/qemu-riscv64 /usr/bin/qemu-static ;; \
+        *) \
+            printf '#!/bin/sh\nexec "$@"\n' > /usr/bin/qemu-static ;; \
+    esac && \
+    chmod +x /usr/bin/qemu-static
 
-# set qemu exec flag
-RUN chmod +x /usr/bin/qemu-static
-
-# cleanup
-RUN apt-get clean -q -y && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
-
-# set entrypoint
+ENV QEMU_EXECVE=/usr/bin/qemu-static
 ENTRYPOINT [ "/usr/bin/qemu-static" ]

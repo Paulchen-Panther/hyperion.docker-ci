@@ -29,6 +29,7 @@ RUN dnf -y group install 'development-tools' 'c-development' 'rpm-development-to
     dnf -y install \
     ninja-build \
     curl \
+    patchelf \
     fedora-packager \
     python3-devel \
     python3-jsonschema \

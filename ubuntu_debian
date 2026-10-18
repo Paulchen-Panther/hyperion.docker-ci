@@ -40,6 +40,7 @@ RUN apt-get -y install \
     libdistro-info-perl \
     git \
     curl \
+    patchelf \
     python3-dev \
     build-essential \
     ninja-build \

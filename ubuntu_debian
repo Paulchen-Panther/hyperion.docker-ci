@@ -99,7 +99,7 @@ else \
     mkdir -p /tmp/cmake; \
     cd /tmp/cmake; \
     curl -kL ${CMAKE_URL}.tar.gz | tar zxf - -C . --strip-components 1; \
-    ./bootstrap --prefix=/usr --parallel=`nproc` --no-qt-gui --no-debugger -- -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DBUILD_CursesDialog=OFF; \
+    ./bootstrap --prefix=/usr --parallel=`nproc` --system-libs --no-qt-gui --no-debugger -- -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DBUILD_CursesDialog=OFF; \
     make -j `nproc`; \
     make install; \
     cd && rm -rf /tmp/cmake; \

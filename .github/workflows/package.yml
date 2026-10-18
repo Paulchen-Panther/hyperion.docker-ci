@@ -13,6 +13,7 @@ env:
   REPOSITORY: hyperion-project
   SECRET_DOCKER_CI: ${{ secrets.DOCKER_CI }}
   QEMU_VERSION: 11.1.1
+  CMAKE_VERSION: 4.4.4
 
 jobs:
 
@@ -49,13 +50,51 @@ jobs:
           labels: org.opencontainers.image.source=https://github.com/${{ env.REPOSITORY }}
           provenance: mode=max
           sbom: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=qemu
+          cache-to: type=gha,mode=max,scope=qemu
           build-args: QEMU_VERSION=${{ env.QEMU_VERSION }}
+
+  build_cmake:
+    name: Build CMake
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: 👀 Checkout
+        uses: actions/checkout@v7
+ 
+      - name: ✅ Determine current Repository
+        if: ${{ !startsWith(github.repository, env.REPOSITORY) }}
+        run: echo "REPOSITORY=$(echo '${{ github.actor }}' | tr '[:upper:]' '[:lower:]')" >> ${GITHUB_ENV}
+ 
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+ 
+      - name: 🔑 Login to GitHub Container Registry
+        if: ${{ env.SECRET_DOCKER_CI != null }}
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.DOCKER_CI }}
+ 
+      - name: 👷 Build and 🚀 Push to GitHub Container/Package Registry
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: ./cmake
+          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
+          allow: security.insecure
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ghcr.io/${{ env.REPOSITORY }}/cmake:latest
+          labels: org.opencontainers.image.source=https://github.com/${{ env.REPOSITORY }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha,scope=cmake
+          cache-to: type=gha,mode=max,scope=cmake
+          build-args: CMAKE_VERSION=${{ env.CMAKE_VERSION }}
 
   build_image:
     name: 🐧 ${{ matrix.os.description }} Qt ${{ matrix.qt_version }}
-    needs: build_qemu
+    needs: [ build_qemu, build_cmake ]
     strategy:
       fail-fast: false
       matrix:

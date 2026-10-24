@@ -99,7 +99,7 @@ jobs:
 
   build_image:
     name: 🐧 ${{ matrix.os.description }} Qt ${{ matrix.qt_version }}
-    needs: [ build_qemu, merge_cmake ]
+    needs: [ build_qemu, build_cmake ]
     strategy:
       fail-fast: false
       matrix:

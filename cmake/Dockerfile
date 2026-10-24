@@ -71,7 +71,7 @@ RUN curl -fsSLO "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER
         'CMake_TEST_BOOTSTRAP:BOOL=FALSE' \
         "CPACK_SYSTEM_NAME:STRING=linux-${A}" \
         > CMakeCache.txt && \
-    /src/bootstrap --parallel="$(nproc)" --docdir=doc/cmake && \
+    /src/bootstrap --parallel="$(nproc)" --docdir=doc/cmake --system-curl && \
     make -j"$(nproc)" && \
     bin/cpack -G TGZ && \
     bin/cpack -G STGZ && \

@@ -2,7 +2,6 @@ ARG DIST="debian"
 ARG SUITE="bookworm"
 ARG QT_VERSION="6"
 ARG REPOSITORY="hyperion-project"
-ARG CMAKE_VERSION="3.28.3"
 ARG DEBIAN_FRONTEND=noninteractive
 
 FROM --platform=linux/amd64 ghcr.io/${REPOSITORY}/qemu:latest AS qemu-bin
@@ -12,7 +11,6 @@ FROM ${DIST}:${SUITE}
 ARG DIST
 ARG SUITE
 ARG QT_VERSION
-ARG CMAKE_VERSION
 ARG DEBIAN_FRONTEND
 ARG TARGETPLATFORM
 

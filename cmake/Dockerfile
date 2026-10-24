@@ -77,7 +77,7 @@ WORKDIR /src
 RUN curl -fsSLO "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz" && \
     tar -xzf "cmake-${CMAKE_VERSION}.tar.gz" --strip-components 1 && \
     mkdir /build && cd /build && \
-    /src/bootstrap --parallel="$(nproc)" --system-curl --generator=Ninja -- \
+    /src/bootstrap --parallel="$(nproc)" --generator=Ninja -- \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_C_STANDARD=11 \
         -DCMAKE_CXX_STANDARD=14 \

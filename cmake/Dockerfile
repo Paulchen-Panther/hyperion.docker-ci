@@ -47,31 +47,27 @@ ARG CMAKE_VERSION
 ARG TARGETARCH
 ARG TARGETVARIANT
 
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential ca-certificates curl perl
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential ca-certificates curl perl ninja-build
 
 WORKDIR /src
 RUN curl -fsSLO "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz" && \
     tar -xzf "cmake-${CMAKE_VERSION}.tar.gz" --strip-components 1 && \
     mkdir /build && cd /build && \
-    A="${TARGETARCH}${TARGETVARIANT}l" && \
-    printf '%s\n' \
-        'CMAKE_BUILD_TYPE:STRING=Release' \
-        'CMAKE_C_STANDARD:STRING=11' \
-        'CMAKE_CXX_STANDARD:STRING=14' \
-        'CMAKE_EXE_LINKER_FLAGS:STRING=-static-libstdc++ -static-libgcc' \
-        'CMAKE_CXX_STANDARD_LIBRARIES:STRING=-Wl,-Bstatic -latomic -Wl,-Bdynamic' \
-        'BUILD_CursesDialog:BOOL=OFF' \
-        'BUILD_QtDialog:BOOL=OFF' \
-        'BUILD_TESTING:BOOL=OFF' \
-        'CMake_TEST_BOOTSTRAP:BOOL=FALSE' \
-        "CPACK_SYSTEM_NAME:STRING=linux-${A}" \
-        > CMakeCache.txt && \
-    /src/bootstrap --parallel="$(nproc)" --docdir=doc/cmake --system-curl && \
-    make -j"$(nproc)" && \
-    bin/cpack -G TGZ && \
+    /src/bootstrap --parallel="$(nproc)" --generator=Ninja -- \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_C_STANDARD=11 \
+        -DCMAKE_CXX_STANDARD=14 \
+        -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -static-libgcc" \
+        -DCMAKE_CXX_STANDARD_LIBRARIES="-Wl,-Bstatic -latomic -Wl,-Bdynamic" \
+        -DBUILD_CursesDialog=OFF \
+        -DBUILD_QtDialog=OFF \
+        -DBUILD_TESTING=OFF \
+        -DCMake_TEST_BOOTSTRAP=FALSE \
+        -DCPACK_SYSTEM_NAME="linux-${TARGETARCH}${TARGETVARIANT}l" && \
+    ninja -j"$(nproc)" && \
     bin/cpack -G STGZ && \
     mkdir /out && \
-    mv cmake-*-linux-"${A}".* /out/
+    mv cmake-*-linux-"${TARGETARCH}${TARGETVARIANT}l".* /out/
 
 # ------------------------------------------
 # Stage 4: Final image

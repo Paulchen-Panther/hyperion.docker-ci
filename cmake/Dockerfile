@@ -77,11 +77,16 @@ WORKDIR /src
 RUN curl -fsSLO "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz" && \
     tar -xzf "cmake-${CMAKE_VERSION}.tar.gz" --strip-components 1 && \
     mkdir /build && cd /build && \
+    case "${TARGETVARIANT}" in \
+        v6|v7) EXTRA_C_FLAGS='-DCMAKE_C_STANDARD_LIBRARIES=-latomic' ;; \
+        *)     EXTRA_C_FLAGS='' ;; \
+    esac && \
     /src/bootstrap --parallel="$(nproc)" --generator=Ninja -- \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_C_STANDARD=11 \
         -DCMAKE_CXX_STANDARD=14 \
         -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -static-libgcc" \
+        ${EXTRA_C_FLAGS} \
         -DCMAKE_CXX_STANDARD_LIBRARIES="-Wl,-Bstatic -latomic -Wl,-Bdynamic" \
         -DCMAKE_USE_OPENSSL=ON \
         -DOPENSSL_CRYPTO_LIBRARY=/opt/openssl/lib/libcrypto.a \

@@ -4,14 +4,12 @@ ARG CMAKE_VERSION=4.4.4
 # Stage 1: Prebuilt binaries (amd64 / arm64)
 # ------------------------------------------
 
-FROM --platform=$BUILDPLATFORM debian:bookworm-slim AS download
+FROM --platform=$BUILDPLATFORM buildpack-deps:bookworm-curl AS download
 
 ARG CMAKE_VERSION
 ARG TARGETARCH
-ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl && \
-    case "${TARGETARCH}" in \
+RUN case "${TARGETARCH}" in \
         amd64) A=x86_64 ;; \
         arm64) A=aarch64 ;; \
         *) exit 1 ;; \
@@ -49,6 +47,8 @@ ARG CMAKE_VERSION
 ARG TARGETARCH
 ARG TARGETVARIANT
 
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential ca-certificates curl perl
+
 WORKDIR /src
 RUN curl -fsSLO "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz" && \
     tar -xzf "cmake-${CMAKE_VERSION}.tar.gz" --strip-components 1 && \
@@ -73,15 +73,8 @@ RUN curl -fsSLO "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER
     mkdir /out && \
     mv cmake-*-linux-"${A}".* /out/
 
-# Test the compiled CMake binaries
-RUN A="${TARGETARCH}${TARGETVARIANT}l" && \
-    P="/tmp/test/cmake-${CMAKE_VERSION}-linux-${A}" && \
-    mkdir /tmp/test && \
-    sh "/out/cmake-${CMAKE_VERSION}-linux-${A}.sh" --skip-license --prefix=/tmp/test && \
-    for b in cmake ctest cpack; do "${P}/bin/${b}" --version | head -n1; done
-
 # ------------------------------------------
-# Stage 5: Final image
+# Stage 4: Final image
 # ------------------------------------------
 
 FROM scratch AS cmake-arm

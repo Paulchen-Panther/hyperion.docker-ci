@@ -1,3 +1,4 @@
+ARG OPENSSL_VERSION=3.6.0
 ARG CMAKE_VERSION=4.4.4
 
 # ------------------------------------------
@@ -39,9 +40,27 @@ COPY --from=raspbian-base /tmp/rootfs /
 FROM --platform=$TARGETPLATFORM ubuntu:22.04 AS base-armv7
 
 # ------------------------------------------
-# Stage 3: CMake (ARM only)
+# Stage 3: OpenSSL (arm only)
 # ------------------------------------------
-FROM base-${TARGETARCH}${TARGETVARIANT} AS cmake-build
+FROM base-${TARGETARCH}${TARGETVARIANT} AS openssl-build
+
+ARG OPENSSL_VERSION
+
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential ca-certificates curl perl
+
+# OpenSSL
+RUN mkdir -p /opt/openssl/src && cd /opt/openssl/src && \
+    curl -fsSLO "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" && \
+    tar -xzf "openssl-${OPENSSL_VERSION}.tar.gz" && \
+    cd "openssl-${OPENSSL_VERSION}" && \
+    ./Configure linux-armv4 --prefix=/opt/openssl --libdir=lib no-asm no-shared && \
+    make -j"$(nproc)" install_dev && \
+    cd / && rm -rf /opt/openssl/src
+
+# ------------------------------------------
+# Stage 4: CMake (arm only)
+# ------------------------------------------
+FROM openssl-build AS cmake-build
 
 ARG CMAKE_VERSION
 ARG TARGETARCH
@@ -53,12 +72,16 @@ WORKDIR /src
 RUN curl -fsSLO "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz" && \
     tar -xzf "cmake-${CMAKE_VERSION}.tar.gz" --strip-components 1 && \
     mkdir /build && cd /build && \
-    /src/bootstrap --parallel="$(nproc)" --generator=Ninja -- \
+    /src/bootstrap --parallel="$(nproc)" --system-curl --generator=Ninja -- \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_C_STANDARD=11 \
         -DCMAKE_CXX_STANDARD=14 \
         -DCMAKE_EXE_LINKER_FLAGS="-static-libstdc++ -static-libgcc" \
         -DCMAKE_CXX_STANDARD_LIBRARIES="-Wl,-Bstatic -latomic -Wl,-Bdynamic" \
+        -DCMAKE_USE_OPENSSL=ON \
+        -DOPENSSL_CRYPTO_LIBRARY=/opt/openssl/lib/libcrypto.a \
+        -DOPENSSL_INCLUDE_DIR=/opt/openssl/include \
+        -DOPENSSL_SSL_LIBRARY=/opt/openssl/lib/libssl.a \
         -DBUILD_CursesDialog=OFF \
         -DBUILD_QtDialog=OFF \
         -DBUILD_TESTING=OFF \
@@ -70,7 +93,7 @@ RUN curl -fsSLO "https://github.com/Kitware/CMake/releases/download/v${CMAKE_VER
     mv cmake-*-linux-"${TARGETARCH}${TARGETVARIANT}l".* /out/
 
 # ------------------------------------------
-# Stage 4: Final image
+# Stage 5: Final image
 # ------------------------------------------
 
 FROM scratch AS cmake-arm

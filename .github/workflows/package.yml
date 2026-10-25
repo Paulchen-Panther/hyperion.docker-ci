@@ -53,10 +53,11 @@ jobs:
           sbom: true
           cache-from: type=registry,ref=ghcr.io/${{ env.REPOSITORY }}/qemu:buildcache
           cache-to: type=registry,ref=ghcr.io/${{ env.REPOSITORY }}/qemu:buildcache,mode=max
-          build-args: QEMU_VERSION=${{ env.QEMU_VERSION }}
+          build-args: |
+            QEMU_VERSION=${{ env.QEMU_VERSION }}
 
   build_cmake:
-    name: Build CMake (multi-arch)
+    name: Build CMake
     runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout

@@ -26,7 +26,8 @@ ARG TARGETVARIANT
 
 RUN if [ "${TARGETARCH}" = "amd64" ]; then \
      mkdir -p /out && \
-     printf '#!/bin/sh\nexec "$@"\n' > /out/qemu-static && \
+     echo '#!/bin/sh' > /out/qemu-static && \
+     echo 'exec "$$@"' >> /out/qemu-static && \
      chmod +x /out/qemu-static; \
 fi
 

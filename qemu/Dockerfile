@@ -14,9 +14,9 @@ RUN --security=insecure \
 FROM scratch AS base-armv6
 COPY --from=raspbian-base /tmp/rootfs /
 
-FROM --platform=$TARGETPLATFORM ubuntu:22.04 AS base-armv7
-FROM --platform=$TARGETPLATFORM ubuntu:24.04 AS base-arm64
-FROM --platform=$TARGETPLATFORM debian:bookworm-slim AS base-amd64
+FROM ubuntu:22.04 AS base-armv7
+FROM ubuntu:24.04 AS base-arm64
+FROM debian:bookworm-slim AS base-amd64
 
 FROM base-${TARGETARCH}${TARGETVARIANT} AS qemu-build
 

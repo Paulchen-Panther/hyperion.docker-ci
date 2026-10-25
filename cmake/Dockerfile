@@ -5,7 +5,7 @@ ARG CMAKE_VERSION=4.4.4
 # Stage 1: Prebuilt binaries (amd64 / arm64)
 # ------------------------------------------
 
-FROM --platform=$BUILDPLATFORM buildpack-deps:bookworm-curl AS download
+FROM buildpack-deps:bookworm-curl AS download
 
 ARG CMAKE_VERSION
 ARG TARGETARCH
@@ -37,7 +37,7 @@ FROM scratch AS base-armv6
 COPY --from=raspbian-base /tmp/rootfs /
 
 # armv7 (Ubuntu 22.04) (glibc 2.35)
-FROM --platform=$TARGETPLATFORM ubuntu:22.04 AS base-armv7
+FROM ubuntu:22.04 AS base-armv7
 
 # ------------------------------------------
 # Stage 3: OpenSSL (arm only)

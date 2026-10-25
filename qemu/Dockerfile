@@ -67,7 +67,7 @@ RUN if [ "${TARGETARCH}" != "amd64" ]; then \
           strip -o "/out/${base}" "$f"; \
           cp "/out/${base}" "/out/qemu-static"; \
      done && \
-     test -n "$(ls -A /out)" \
+     test -n "$(ls -A /out)"; \
 fi
 
 FROM scratch AS qemu

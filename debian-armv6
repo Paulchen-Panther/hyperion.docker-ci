@@ -3,7 +3,7 @@ ARG SUITE=bookworm
 ARG QT_VERSION=6
 ARG REPOSITORY="hyperion-project"
 
-FROM --platform=linux/amd64 ghcr.io/${REPOSITORY}/qemu:latest AS qemu-bin
+FROM ghcr.io/${REPOSITORY}/qemu:latest AS qemu-bin
 FROM ghcr.io/${REPOSITORY}/cmake:latest AS cmake-bin
 
 # Base image with the Raspbian rootfs
@@ -87,6 +87,6 @@ RUN --mount=type=bind,from=cmake-bin,source=/cmake,target=/mnt/cmake sh /mnt/cma
 RUN cmake --version
 
 # Copy qemu and set QEMU_EXECVE / ENTRYPOINT
-COPY --from=qemu-bin /qemu/qemu-arm /usr/bin/qemu-static
+COPY --from=qemu-bin /qemu/qemu-static /usr/bin/qemu-static
 ENV QEMU_EXECVE=/usr/bin/qemu-static
 ENTRYPOINT [ "/usr/bin/qemu-static" ]

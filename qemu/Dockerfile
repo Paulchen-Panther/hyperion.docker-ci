@@ -1,51 +1,74 @@
 ARG QEMU_VERSION=11.1.1
 
-FROM ubuntu:24.04 AS build
+FROM --platform=$BUILDPLATFORM debian:bookworm-slim AS raspbian-base
+
+RUN --security=insecure \
+     apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gpgv xz-utils debootstrap qemu-user-static binfmt-support && \
+     update-binfmts --enable qemu-arm || true && \
+     curl -fsSL "https://archive.raspbian.org/raspbian/pool/main/r/raspbian-archive-keyring/raspbian-archive-keyring_20120528.4_all.deb" -o /tmp/r.deb && \
+     dpkg-deb -x /tmp/r.deb /tmp/r-key && \
+     debootstrap --keyring=/tmp/r-key/usr/share/keyrings/raspbian-archive-keyring.gpg --arch="armhf" --variant="minbase" "bookworm" /tmp/rootfs "http://archive.raspbian.org/raspbian/" && \
+     install -D -m644 /tmp/r-key/usr/share/keyrings/raspbian-archive-keyring.gpg /tmp/rootfs/etc/apt/trusted.gpg.d/raspbian-archive-keyring.gpg && \
+     rm -rf /tmp/r.deb /tmp/r-key
+
+FROM scratch AS base-armv6
+COPY --from=raspbian-base /tmp/rootfs /
+
+FROM --platform=$TARGETPLATFORM ubuntu:22.04 AS base-armv7
+FROM --platform=$TARGETPLATFORM ubuntu:24.04 AS base-arm64
+FROM --platform=$TARGETPLATFORM debian:bookworm-slim AS base-amd64
+
+FROM base-${TARGETARCH}${TARGETVARIANT} AS qemu-build
 
 ARG QEMU_VERSION
-ARG DEBIAN_FRONTEND=noninteractive
+ARG TARGETARCH
+ARG TARGETVARIANT
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-     build-essential \
-     ninja-build \
-     pkg-config \
-     patch \
-     curl \
-     ca-certificates \
-     xz-utils \
-     file \
-     python3 \
-     python3-venv \
-     python3-pip \
-     libglib2.0-dev \
-     libpcre2-dev \
-     zlib1g-dev
+RUN if [ "${TARGETARCH}" = "amd64" ]; then \
+     mkdir -p /out && \
+     printf '#!/bin/sh\nexec "$@"\n' > /out/qemu-static && \
+     chmod +x /out/qemu-static; \
+fi
 
 WORKDIR /src
 COPY patches/ /patches/
 
-RUN curl -fsSLO "https://download.qemu.org/qemu-${QEMU_VERSION}.tar.xz" && \
+RUN if [ "${TARGETARCH}" != "amd64" ]; then \
+     apt-get update && apt-get install -y --no-install-recommends build-essential ca-certificates curl xz-utils ninja-build python3 patch && \
+     case "${TARGETARCH}${TARGETVARIANT}" in \
+          armv6|armv7) TARGETS="arm-linux-user" ;; \
+          arm64)       TARGETS="aarch64-linux-user" ;; \
+          *) exit 1 ;; \
+     esac && \
+     curl -fsSLO "https://download.qemu.org/qemu-${QEMU_VERSION}.tar.xz" && \
      tar -xf "qemu-${QEMU_VERSION}.tar.xz" && \
      rm "qemu-${QEMU_VERSION}.tar.xz" && \
      cd "qemu-${QEMU_VERSION}" && \
-     set -- /patches/*.patch && \
-     test -e "$1" && \
-     for patch in "$@"; do \
-          patch -p1 --no-backup-if-mismatch < "$patch"; \
-     done && \
+     if ls /patches/*.patch >/dev/null 2>&1; then \
+          for patch in /patches/*.patch; do \
+               patch -p1 --no-backup-if-mismatch < "$patch" || exit 1; \
+          done; \
+     fi && \
      mkdir /build && cd /build && \
      "/src/qemu-${QEMU_VERSION}/configure" \
           --static \
-          --target-list=arm-linux-user,aarch64-linux-user,riscv64-linux-user \
+          --target-list=${TARGETS} \
           --disable-system \
           --disable-tools \
           --disable-docs \
           --disable-guest-agent \
           --disable-plugins \
           --disable-download && \
-     ninja -j"$(nproc)" qemu-arm qemu-aarch64 qemu-riscv64 && \
-     mkdir /out && find /build -maxdepth 1 -type f -executable -name 'qemu-*' -exec sh -c 'for f; do strip -o "/out/$(basename "$f")" "$f"; done' sh {} + && \
-     test -n "$(ls -A /out)"
+     ninja -j"$(nproc)" && \
+     mkdir /out && \
+     for f in /build/qemu-*; do \
+          [ -x "$f" ] || continue; \
+          base=$(basename "$f"); \
+          strip -o "/out/${base}" "$f"; \
+          cp "/out/${base}" "/out/qemu-static"; \
+     done && \
+     test -n "$(ls -A /out)" \
+fi
 
 FROM scratch AS qemu
-COPY --from=build /out/ /qemu/
+COPY --from=qemu-build /out/ /qemu/

@@ -20,7 +20,7 @@ jobs:
 
   build_qemu:
     name: Build QEMU
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: 👀 Checkout
         uses: actions/checkout@v7
@@ -41,11 +41,10 @@ jobs:
           password: ${{ secrets.DOCKER_CI }}
 
       - name: 👷 Build and 🚀 Push to GitHub Container/Package Registry
-        id: build
         uses: docker/build-push-action@v7
         with:
           context: ./qemu
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           push: ${{ github.event_name != 'pull_request' }}
           tags: ghcr.io/${{ env.REPOSITORY }}/qemu:latest
           labels: org.opencontainers.image.source=https://github.com/${{ env.REPOSITORY }}
@@ -78,35 +77,23 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.DOCKER_CI }}
 
-      - name: 👷 Build per platform (own cache each) and push by digest
-        run: |
-          IMAGE="ghcr.io/${REPOSITORY}/cmake"
-          : > digests.txt
-          for platform in linux/amd64 linux/arm64 linux/arm/v6 linux/arm/v7; do
-            cache_tag="buildcache-${platform//\//-}"   # z. B. buildcache-linux-arm-v6
-            echo "::group::Build ${platform}"
-            docker buildx build ./cmake \
-              --file ./cmake/Dockerfile \
-              --allow security.insecure \
-              --platform "${platform}" \
-              --build-arg "CMAKE_VERSION=${CMAKE_VERSION}" \
-              --build-arg "OPENSSL_VERSION=${OPENSSL_VERSION}" \
-              --label "org.opencontainers.image.source=https://github.com/${REPOSITORY}" \
-              --provenance=mode=max \
-              --sbom=true \
-              --cache-from "type=registry,ref=${IMAGE}:${cache_tag}" \
-              --cache-to "type=registry,ref=${IMAGE}:${cache_tag},mode=max" \
-              --output "type=image,name=${IMAGE},push-by-digest=true,name-canonical=true,push=true" \
-              --metadata-file "meta-${cache_tag}.json"
-            echo "::endgroup::"
-            echo "${IMAGE}@$(jq -r '."containerimage.digest"' "meta-${cache_tag}.json")" >> digests.txt
-          done
-
-      - name: 🚀 Create multi-arch manifest
-        run: |
-          IMAGE="ghcr.io/${REPOSITORY}/cmake"
-          docker buildx imagetools create -t "${IMAGE}:latest" $(cat digests.txt)
-          docker buildx imagetools inspect "${IMAGE}:latest"
+      - name: 👷 Build and 🚀 Push to GitHub Container/Package Registry
+        uses: docker/build-push-action@v7
+        with:
+          context: ./cmake
+          file: ./cmake/Dockerfile
+          platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
+          allow: security.insecure
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ghcr.io/${{ env.REPOSITORY }}/cmake:latest
+          labels: org.opencontainers.image.source=https://github.com/${{ env.REPOSITORY }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=registry,ref=ghcr.io/${{ env.REPOSITORY }}/cmake:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ env.REPOSITORY }}/cmake:buildcache,mode=max
+          build-args: |
+            CMAKE_VERSION=${{ env.CMAKE_VERSION }}
+            OPENSSL_VERSION=${{ env.OPENSSL_VERSION }}
 
   build_image:
     name: 🐧 ${{ matrix.os.description }} Qt ${{ matrix.qt_version }}

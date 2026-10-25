@@ -1,5 +1,11 @@
 ARG QEMU_VERSION=11.1.1
 
+FROM --platform=$BUILDPLATFORM debian:bookworm-slim AS passthrough
+
+RUN mkdir -p /out && \
+    printf '#!/bin/sh\nexec "$@"\n' > /out/qemu-static && \
+    chmod +x /out/qemu-static
+
 FROM --platform=$BUILDPLATFORM debian:bookworm-slim AS raspbian-base
 
 RUN --security=insecure \
@@ -24,13 +30,7 @@ ARG QEMU_VERSION
 ARG TARGETARCH
 ARG TARGETVARIANT
 
-RUN if [ "${TARGETARCH}" = "amd64" ]; then \
-     mkdir -p /out && \
-     echo '#!/bin/sh' > /out/qemu-static && \
-     echo 'exec "$$@"' >> /out/qemu-static && \
-     chmod +x /out/qemu-static; \
-fi
-
+COPY --from=passthrough /out/qemu-static /out/qemu-static
 WORKDIR /src
 COPY patches/ /patches/
 

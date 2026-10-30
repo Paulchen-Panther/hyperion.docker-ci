@@ -45,6 +45,7 @@ RUN if [ "${TARGETARCH}" != "amd64" ]; then \
           xz-utils \
           python3 \
           python3-venv \
+          python3-pip \
           libglib2.0-dev \
           libpcre2-dev \
           zlib1g-dev && \

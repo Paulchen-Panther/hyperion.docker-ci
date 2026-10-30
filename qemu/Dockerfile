@@ -60,7 +60,7 @@ RUN if [ "${TARGETARCH}" != "amd64" ]; then \
           --disable-plugins \
           --disable-download && \
      ninja -j"$(nproc)" && \
-     mkdir /out && \
+     mkdir -p /out && \
      if [ -x "/build/${TARGETS}" ]; then \
           ${CROSS_PREFIX}strip -o "/out/${TARGETS}" "/build/${TARGETS}"; \
           cp "/out/${TARGETS}" "/out/qemu-static"; \

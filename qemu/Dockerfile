@@ -24,27 +24,19 @@ RUN if [ "${TARGETARCH}" != "amd64" ]; then \
           curl \
           ca-certificates \
           xz-utils \
+          file \
           python3 \
           python3-venv \
           python3-pip \
-          python3-tomli \
           libglib2.0-dev \
           libpcre2-dev \
-          zlib1g-dev \
-          gcc-arm-linux-gnueabihf \
-          g++-arm-linux-gnueabihf \
-          gcc-aarch64-linux-gnu \
-          g++-aarch64-linux-gnu && \
+          zlib1g-dev && \
      case "${TARGETARCH}${TARGETVARIANT}" in \
           armv6|armv7) \
                TARGETS="arm-linux-user" \
-               CROSS_PREFIX="arm-linux-gnueabihf-" \
-               QEMU_CPU="arm" \
                ;; \
           arm64) \
                TARGETS="aarch64-linux-user" \
-               CROSS_PREFIX="aarch64-linux-gnu-" \
-               QEMU_CPU="aarch64" \
                ;; \
           *) exit 1 ;; \
      esac && \
@@ -60,10 +52,7 @@ RUN if [ "${TARGETARCH}" != "amd64" ]; then \
      mkdir /build && cd /build && \
      "/src/qemu-${QEMU_VERSION}/configure" \
           --static \
-          --cross-prefix=${CROSS_PREFIX} \
-          --cpu=${QEMU_CPU} \
           --target-list=${TARGETS} \
-          --enable-linux-user \
           --disable-system \
           --disable-tools \
           --disable-docs \
@@ -78,7 +67,6 @@ RUN if [ "${TARGETARCH}" != "amd64" ]; then \
      fi && \
      test -n "$(ls -A /out)"; \
 fi
-
 
 FROM scratch AS qemu
 COPY --from=qemu-build /out/ /qemu/

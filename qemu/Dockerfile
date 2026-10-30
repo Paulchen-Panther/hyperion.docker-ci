@@ -35,21 +35,19 @@ RUN if [ "${TARGETARCH}" != "amd64" ]; then \
           g++-arm-linux-gnueabihf \
           gcc-aarch64-linux-gnu \
           g++-aarch64-linux-gnu && \
-     \
      case "${TARGETARCH}${TARGETVARIANT}" in \
           armv6|armv7) \
-               TARGETS="arm" \
+               TARGETS="arm-linux-user" \
                CROSS_PREFIX="arm-linux-gnueabihf-" \
                QEMU_CPU="arm" \
                ;; \
           arm64) \
-               TARGETS="aarch64" \
+               TARGETS="aarch64-linux-user" \
                CROSS_PREFIX="aarch64-linux-gnu-" \
                QEMU_CPU="aarch64" \
                ;; \
           *) exit 1 ;; \
      esac && \
-     \
      curl -fsSLO "https://download.qemu.org/qemu-${QEMU_VERSION}.tar.xz" && \
      tar -xf "qemu-${QEMU_VERSION}.tar.xz" && \
      rm "qemu-${QEMU_VERSION}.tar.xz" && \
@@ -60,12 +58,12 @@ RUN if [ "${TARGETARCH}" != "amd64" ]; then \
           done; \
      fi && \
      mkdir /build && cd /build && \
-     \
      "/src/qemu-${QEMU_VERSION}/configure" \
           --static \
           --cross-prefix=${CROSS_PREFIX} \
           --cpu=${QEMU_CPU} \
           --target-list=${TARGETS} \
+          --enable-linux-user \
           --disable-system \
           --disable-tools \
           --disable-docs \
@@ -74,14 +72,13 @@ RUN if [ "${TARGETARCH}" != "amd64" ]; then \
           --disable-download && \
      ninja -j"$(nproc)" && \
      mkdir /out && \
-     for f in /build/qemu-*; do \
-          [ -x "$f" ] || continue; \
-          base=$(basename "$f"); \
-          ${CROSS_PREFIX}strip -o "/out/${base}" "$f"; \
-          cp "/out/${base}" "/out/qemu-static"; \
-     done && \
+     if [ -x "/build/${TARGETS}" ]; then \
+          ${CROSS_PREFIX}strip -o "/out/${TARGETS}" "/build/${TARGETS}"; \
+          cp "/out/${TARGETS}" "/out/qemu-static"; \
+     fi && \
      test -n "$(ls -A /out)"; \
 fi
+
 
 FROM scratch AS qemu
 COPY --from=qemu-build /out/ /qemu/

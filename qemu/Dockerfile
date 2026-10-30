@@ -49,7 +49,6 @@ RUN if [ "${TARGETARCH}" != "amd64" ]; then \
                ;; \
           *) exit 1 ;; \
      esac && \
-     \
      curl -fsSLO "https://download.qemu.org/qemu-${QEMU_VERSION}.tar.xz" && \
      tar -xf "qemu-${QEMU_VERSION}.tar.xz" && \
      rm "qemu-${QEMU_VERSION}.tar.xz" && \

@@ -35,7 +35,19 @@ WORKDIR /src
 COPY patches/ /patches/
 
 RUN if [ "${TARGETARCH}" != "amd64" ]; then \
-     apt-get update && apt-get install -y --no-install-recommends build-essential ca-certificates curl xz-utils ninja-build python3 patch && \
+     apt-get update && apt-get install -y --no-install-recommends \
+          build-essential \
+          ninja-build \
+          pkg-config \
+          patch \
+          curl \
+          ca-certificates \
+          xz-utils \
+          python3 \
+          python3-venv \
+          libglib2.0-dev \
+          libpcre2-dev \
+          zlib1g-dev && \
      case "${TARGETARCH}${TARGETVARIANT}" in \
           armv6|armv7) TARGETS="arm-linux-user" ;; \
           arm64)       TARGETS="aarch64-linux-user" ;; \

@@ -38,17 +38,18 @@ RUN if [ "${TARGETARCH}" != "amd64" ]; then \
      \
      case "${TARGETARCH}${TARGETVARIANT}" in \
           armv6|armv7) \
-               TARGETS="arm-linux-user" \
+               TARGETS="arm" \
                CROSS_PREFIX="arm-linux-gnueabihf-" \
                QEMU_CPU="arm" \
                ;; \
           arm64) \
-               TARGETS="aarch64-linux-user" \
+               TARGETS="aarch64" \
                CROSS_PREFIX="aarch64-linux-gnu-" \
                QEMU_CPU="aarch64" \
                ;; \
           *) exit 1 ;; \
      esac && \
+     \
      curl -fsSLO "https://download.qemu.org/qemu-${QEMU_VERSION}.tar.xz" && \
      tar -xf "qemu-${QEMU_VERSION}.tar.xz" && \
      rm "qemu-${QEMU_VERSION}.tar.xz" && \

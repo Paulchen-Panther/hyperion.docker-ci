@@ -35,17 +35,21 @@ RUN if [ "${TARGETARCH}" != "amd64" ]; then \
           g++-arm-linux-gnueabihf \
           gcc-aarch64-linux-gnu \
           g++-aarch64-linux-gnu && \
+     \
      case "${TARGETARCH}${TARGETVARIANT}" in \
           armv6|armv7) \
                TARGETS="arm-linux-user" \
                CROSS_PREFIX="arm-linux-gnueabihf-" \
+               QEMU_CPU="arm" \
                ;; \
           arm64) \
                TARGETS="aarch64-linux-user" \
                CROSS_PREFIX="aarch64-linux-gnu-" \
+               QEMU_CPU="aarch64" \
                ;; \
           *) exit 1 ;; \
      esac && \
+     \
      curl -fsSLO "https://download.qemu.org/qemu-${QEMU_VERSION}.tar.xz" && \
      tar -xf "qemu-${QEMU_VERSION}.tar.xz" && \
      rm "qemu-${QEMU_VERSION}.tar.xz" && \
@@ -56,9 +60,11 @@ RUN if [ "${TARGETARCH}" != "amd64" ]; then \
           done; \
      fi && \
      mkdir /build && cd /build && \
+     \
      "/src/qemu-${QEMU_VERSION}/configure" \
           --static \
           --cross-prefix=${CROSS_PREFIX} \
+          --cpu=${QEMU_CPU} \
           --target-list=${TARGETS} \
           --disable-system \
           --disable-tools \

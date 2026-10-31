@@ -4,6 +4,7 @@ ARG QT_VERSION="6"
 ARG REPOSITORY="hyperion-project"
 ARG DEBIAN_FRONTEND=noninteractive
 
+FROM ghcr.io/${REPOSITORY}/qt6:latest AS qt6-bin
 FROM ghcr.io/${REPOSITORY}/qemu:latest AS qemu-bin
 FROM ghcr.io/${REPOSITORY}/cmake:latest AS cmake-bin
 
@@ -23,13 +24,13 @@ ENV DEBEMAIL="admin@hyperion-project.org"
 RUN apt-get update
 
 # install qt5 or qt6
-RUN if [ "$QT_VERSION" = "6" ]; then \
-    if [ "$SUITE" = "jammy" ]; then SERIALPORT="libqt6serialport6-dev"; else SERIALPORT="qt6-serialport-dev"; fi; \
-    if [ "$SUITE" = "jammy" ]; then WEBSOCKETS="libqt6websockets6-dev"; else WEBSOCKETS="qt6-websockets-dev"; fi; \
-    apt-get -y install qt6-base-dev $SERIALPORT $WEBSOCKETS libqt6sql6-sqlite libxkbcommon-dev libvulkan-dev libgl1-mesa-dev; \
-else \
-    apt-get -y install qtbase5-dev libqt5serialport5-dev libqt5websockets5-dev libqt5sql5-sqlite libqt5svg5-dev; \
-fi
+RUN --mount=type=bind,from=qt6-bin,source=/qt6,target=/mnt/qt6 \
+    if [ "$QT_VERSION" = "6" ]; then \
+        apt-get -y install libxkbcommon-dev libvulkan-dev libgl1-mesa-dev; \
+        sh /mnt/qt6/qt6-*.sh --skip-license --prefix=/opt/qt6 --exclude-subdir; \
+    else \
+        apt-get -y install qtbase5-dev libqt5serialport5-dev libqt5websockets5-dev libqt5sql5-sqlite libqt5svg5-dev; \
+    fi
 
 # install general deps (all platforms/arch/os)
 RUN apt-get -y install \

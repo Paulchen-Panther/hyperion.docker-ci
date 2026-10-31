@@ -3,6 +3,7 @@ ARG SUITE=bookworm
 ARG QT_VERSION=6
 ARG REPOSITORY="hyperion-project"
 
+FROM ghcr.io/${REPOSITORY}/qt6:latest AS qt6-bin
 FROM ghcr.io/${REPOSITORY}/qemu:latest AS qemu-bin
 FROM ghcr.io/${REPOSITORY}/cmake:latest AS cmake-bin
 
@@ -35,11 +36,13 @@ ARG QT_VERSION
 ARG DEBIAN_FRONTEND=noninteractive
 
 # install qt5 or qt6
-RUN if [ "$QT_VERSION" = "6" ]; then \
-    apt-get -y install qt6-base-dev libqt6sql6-sqlite qt6-serialport-dev qt6-websockets-dev libxkbcommon-dev libvulkan-dev libgl1-mesa-dev; \
-else \
-    apt-get -y install qtbase5-dev libqt5serialport5-dev libqt5websockets5-dev libqt5sql5-sqlite libqt5svg5-dev; \
-fi
+RUN --mount=type=bind,from=qt6-bin,source=/qt6,target=/mnt/qt6 \
+    if [ "$QT_VERSION" = "6" ]; then \
+        apt-get -y install libxkbcommon-dev libvulkan-dev libgl1-mesa-dev; \
+        sh /mnt/qt6/qt6-*.sh --skip-license --prefix=/opt/qt6 --exclude-subdir; \
+    else \
+        apt-get -y install qtbase5-dev libqt5serialport5-dev libqt5websockets5-dev libqt5sql5-sqlite libqt5svg5-dev; \
+    fi
 
 # install deps
 RUN apt-get -y install \

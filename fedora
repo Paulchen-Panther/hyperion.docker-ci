@@ -3,6 +3,7 @@ ARG SUITE="42"
 ARG QT_VERSION="6"
 ARG REPOSITORY="hyperion-project"
 
+FROM ghcr.io/${REPOSITORY}/qt6:latest AS qt6-bin
 FROM ghcr.io/${REPOSITORY}/qemu:latest AS qemu-bin
 FROM ghcr.io/${REPOSITORY}/cmake:latest AS cmake-bin
 
@@ -17,11 +18,13 @@ ENV TARGETPLATFORM=${TARGETPLATFORM:-linux/amd64}
 RUN dnf -y update
 
 # Install qt5 or qt6
-RUN if [ "$QT_VERSION" = "6" ]; then \
-    dnf -y install qt6-qtbase-devel qt6-qtserialport-devel qt6-qtwebsockets-devel libxkbcommon-devel; \
-else \
-    dnf -y install qt5-qtbase-devel qt5-qtserialport-devel qt5-qtwebsockets-devel qt5-qtx11extras-devel; \
-fi
+RUN --mount=type=bind,from=qt6-bin,source=/qt6,target=/mnt/qt6 \
+    if [ "$QT_VERSION" = "6" ]; then \
+        dnf -y install libxkbcommon-devel; \
+        sh /mnt/qt6/qt6-*.sh --skip-license --prefix=/opt/qt6 --exclude-subdir; \
+    else \
+        dnf -y install qt5-qtbase-devel qt5-qtserialport-devel qt5-qtwebsockets-devel qt5-qtx11extras-devel; \
+    fi
 
 # Install general deps
 RUN dnf -y group install 'development-tools' 'c-development' 'rpm-development-tools' && \

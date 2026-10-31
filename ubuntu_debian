@@ -26,7 +26,7 @@ RUN apt-get update
 # install qt5 or qt6
 RUN --mount=type=bind,from=qt6-bin,source=/qt6,target=/mnt/qt6 \
     if [ "$QT_VERSION" = "6" ]; then \
-        apt-get -y install libxkbcommon-dev libvulkan-dev libgl1-mesa-dev; \
+        apt-get -y install libfontconfig1-dev libxkbcommon-dev libvulkan-dev libgl1-mesa-dev; \
         sh /mnt/qt6/qt6-*.sh --skip-license --prefix=/usr --exclude-subdir; \
     else \
         apt-get -y install qtbase5-dev libqt5serialport5-dev libqt5websockets5-dev libqt5sql5-sqlite libqt5svg5-dev; \

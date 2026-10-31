@@ -94,7 +94,7 @@ jobs:
             OPENSSL_VERSION=${{ env.OPENSSL_VERSION }}
 
   build_qt:
-    name: Build Qt
+    name: Build Qt6
     needs: build_cmake
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 360
@@ -120,15 +120,14 @@ jobs:
       - name: 👷 Build and 🚀 Push to GitHub Container/Package Registry
         uses: docker/build-push-action@v7
         with:
-          context: ./qt
-          file: ./qt/Dockerfile
+          context: ./qt6
           platforms: linux/amd64,linux/arm64,linux/arm/v6,linux/arm/v7
           allow: security.insecure
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ghcr.io/${{ env.REPOSITORY }}/qt:latest
+          tags: ghcr.io/${{ env.REPOSITORY }}/qt6:latest
           labels: org.opencontainers.image.source=https://github.com/${{ env.REPOSITORY }}
-          cache-from: type=registry,ref=ghcr.io/${{ env.REPOSITORY }}/qt:buildcache
-          cache-to: type=registry,ref=ghcr.io/${{ env.REPOSITORY }}/qt:buildcache,mode=max
+          cache-from: type=registry,ref=ghcr.io/${{ env.REPOSITORY }}/qt6:buildcache
+          cache-to: type=registry,ref=ghcr.io/${{ env.REPOSITORY }}/qt6:buildcache,mode=max
           build-args: |
             QT_VERSION=${{ env.QT_VERSION }}
 

@@ -1,7 +1,6 @@
 ARG QT_VERSION=6.12.0
-ARG CMAKE_IMAGE=ghcr.io/paulchen-panther/hyperion.docker-ci/cmake:latest
 
-FROM ${CMAKE_IMAGE} AS cmake-image
+FROM ghcr.io/paulchen-panther/cmake:latest AS cmake-image
 
 # armv6 (Raspbian Bookworm) (glibc 2.36)
 FROM --platform=$BUILDPLATFORM debian:bookworm-slim AS raspbian-base

@@ -1,10 +1,13 @@
 ARG REPOSITORY="paulchen-panther"
 ARG QT_VERSION="6.8.4"
 
+# ------------------------------------------
+# Stage 1: CMake from our own image
+# ------------------------------------------
 FROM ghcr.io/${REPOSITORY}/cmake:latest AS cmake-bin
 
 # ------------------------------------------
-# Stage 2: Base image
+# Stage 2: Base images (same as in the cmake Dockerfile)
 # ------------------------------------------
 
 # armv6 (Raspbian Bookworm) (glibc 2.36)
@@ -39,9 +42,15 @@ ARG QT_MODULES="qtserialport qtwebsockets"
 ARG QT_XCB=1
 # Additional qtbase configure options, e.g. more -no-feature-*
 ARG QT_EXTRA_ARGS=""
+# ARMv6K is required for lock-free 8/64-bit atomics (all Raspberry Pi 1/Zero are ARMv6KZ)
+ARG ARMV6_FLAGS="-march=armv6zk -mfpu=vfp -mfloat-abi=hard"
+ARG TARGETARCH
+ARG TARGETVARIANT
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential ninja-build perl python3 pkg-config ca-certificates curl xz-utils libssl-dev libudev-dev libxkbcommon-dev && \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential ninja-build perl python3 pkg-config ca-certificates curl xz-utils \
+        libssl-dev libudev-dev libxkbcommon-dev && \
     if [ "${QT_XCB}" = "1" ]; then \
         apt-get install -y --no-install-recommends \
             libfontconfig1-dev libx11-dev libx11-xcb-dev libxkbcommon-x11-dev \
@@ -52,7 +61,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
     fi && \
     rm -rf /var/lib/apt/lists/*
 
-# Install CMake
+# Install CMake (same pattern as in ubuntu_debian / fedora / debian-armv6)
 RUN --mount=type=bind,from=cmake-bin,source=/cmake,target=/mnt/cmake sh /mnt/cmake/cmake-*.sh --skip-license --prefix=/usr/local --exclude-subdir
 
 # Download sources
@@ -64,8 +73,11 @@ RUN base="https://download.qt.io/archive/qt/${QT_VERSION%.*}/${QT_VERSION}/submo
         rm "${m}-everywhere-src-${QT_VERSION}.tar.xz" || exit 1; \
     done
 
-# Build qtbase
-RUN if [ "${QT_XCB}" = "1" ]; then \
+# Build qtbase (separate RUN so the long step stays in the layer cache)
+RUN if [ "${TARGETARCH}${TARGETVARIANT}" = "armv6" ]; then \
+        export CFLAGS="${ARMV6_FLAGS}" CXXFLAGS="${ARMV6_FLAGS}"; \
+    fi && \
+    if [ "${QT_XCB}" = "1" ]; then \
         PLATFORM_ARGS="-xcb -xcb-xlib -fontconfig"; \
     else \
         PLATFORM_ARGS="-no-xcb -no-fontconfig -qpa offscreen"; \
@@ -86,8 +98,11 @@ RUN if [ "${QT_XCB}" = "1" ]; then \
     cmake --build . --parallel "$(nproc)" && \
     cmake --install .
 
-# Build additional modules and strip
-RUN for m in ${QT_MODULES}; do \
+# Build additional modules and strip the shared libraries
+RUN if [ "${TARGETARCH}${TARGETVARIANT}" = "armv6" ]; then \
+        export CFLAGS="${ARMV6_FLAGS}" CXXFLAGS="${ARMV6_FLAGS}"; \
+    fi && \
+    for m in ${QT_MODULES}; do \
         mkdir -p "/build/${m}" && cd "/build/${m}" && \
         cmake -G Ninja -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH="${QT_PREFIX}" \
@@ -100,7 +115,7 @@ RUN for m in ${QT_MODULES}; do \
     (find "${QT_PREFIX}" -type f -name '*.so*' -exec strip --strip-unneeded {} + 2>/dev/null || true)
 
 # ------------------------------------------
-# Stage 4: Create the installer (STGZ)
+# Stage 4: Create the installer (STGZ) from the install tree
 # ------------------------------------------
 FROM qt-build AS qt-package
 
@@ -109,7 +124,8 @@ ARG QT_PREFIX=/opt/qt6
 ARG TARGETARCH
 ARG TARGETVARIANT
 
-COPY installer.cmake /pkg/CMakeLists.txt
+# Small CMake project that only packages the finished install tree (keeps symlinks)
+COPY CMakeLists.txt /pkg/CMakeLists.txt
 
 RUN mkdir -p /out && \
     case "${TARGETARCH}${TARGETVARIANT}" in \
@@ -125,7 +141,7 @@ RUN mkdir -p /out && \
         -DQT_SRC="/src/qtbase-everywhere-src-${QT_VERSION}" && \
     cd /pkg/build && cpack
 
-# Sanity check
+# Sanity check: does the installer unpack cleanly (including symlinks)?
 RUN mkdir /chk && \
     sh /out/qt6-*.sh --skip-license --prefix=/chk --exclude-subdir && \
     test -f /chk/lib/cmake/Qt6/Qt6Config.cmake && \

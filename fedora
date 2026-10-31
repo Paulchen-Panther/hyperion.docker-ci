@@ -21,7 +21,7 @@ RUN dnf -y update
 RUN --mount=type=bind,from=qt6-bin,source=/qt6,target=/mnt/qt6 \
     if [ "$QT_VERSION" = "6" ]; then \
         dnf -y install libxkbcommon-devel; \
-        sh /mnt/qt6/qt6-*.sh --skip-license --prefix=/opt/qt6 --exclude-subdir; \
+        sh /mnt/qt6/qt6-*.sh --skip-license --prefix=/usr --exclude-subdir; \
     else \
         dnf -y install qt5-qtbase-devel qt5-qtserialport-devel qt5-qtwebsockets-devel qt5-qtx11extras-devel; \
     fi

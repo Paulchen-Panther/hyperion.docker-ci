@@ -1,4 +1,4 @@
-ARG QT_VERSION=6.8.4
+ARG QT_VERSION=6.12.0
 
 FROM ghcr.io/paulchen-panther/cmake:latest AS cmake-bin
 

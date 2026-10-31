@@ -102,9 +102,9 @@ jobs:
       matrix:
         include:
           - { arch: amd64, platform: linux/amd64,  runner: ubuntu-24.04 }
-          # - { arch: arm64, platform: linux/arm64,  runner: ubuntu-24.04-arm }
-          # - { arch: armv7, platform: linux/arm/v7, runner: ubuntu-24.04-arm }
-          # - { arch: armv6, platform: linux/arm/v6, runner: ubuntu-24.04-arm }
+          - { arch: arm64, platform: linux/arm64,  runner: ubuntu-24.04-arm }
+          - { arch: armv7, platform: linux/arm/v7, runner: ubuntu-24.04-arm }
+          - { arch: armv6, platform: linux/arm/v6, runner: ubuntu-24.04-arm }
     steps:
       - name: 👀 Checkout
         uses: actions/checkout@v7
@@ -130,6 +130,8 @@ jobs:
           context: ./qt6
           platforms: ${{ matrix.platform }}
           allow: security.insecure
+          provenance: false
+          sbom: false
           push: ${{ github.event_name != 'pull_request' }}
           tags: ghcr.io/${{ env.REPOSITORY }}/qt6:${{ env.QT_VERSION }}-${{ matrix.arch }}
           labels: org.opencontainers.image.source=https://github.com/${{ env.REPOSITORY }}
@@ -138,33 +140,32 @@ jobs:
           build-args: |
             QT_VERSION=${{ env.QT_VERSION }}
  
-  # merge_qt6:
-  #   name: Merge Qt6 multi-arch manifest
-  #   needs: build_qt6
-  #   if: ${{ github.event_name != 'pull_request' }}
-  #   runs-on: ubuntu-24.04
-  #   steps:
-  #     - name: ✅ Determine current Repository
-  #       if: ${{ !startsWith(github.repository, env.REPOSITORY) }}
-  #       run: echo "REPOSITORY=$(echo '${{ github.actor }}' | tr '[:upper:]' '[:lower:]')" >> ${GITHUB_ENV}
+  merge_qt6:
+    name: Merge Qt6 multi-arch manifest
+    needs: build_qt6
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: ✅ Determine current Repository
+        if: ${{ !startsWith(github.repository, env.REPOSITORY) }}
+        run: echo "REPOSITORY=$(echo '${{ github.actor }}' | tr '[:upper:]' '[:lower:]')" >> ${GITHUB_ENV}
  
-  #     - name: 🐳 Set up Docker Buildx
-  #       uses: docker/setup-buildx-action@v4
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
  
-  #     - name: 🔑 Login to GitHub Container Registry
-  #       if: ${{ env.SECRET_DOCKER_CI != null }}
-  #       uses: docker/login-action@v4
-  #       with:
-  #         registry: ghcr.io
-  #         username: ${{ github.actor }}
-  #         password: ${{ secrets.DOCKER_CI }}
+      - name: 🔑 Login to GitHub Container Registry
+        if: ${{ env.SECRET_DOCKER_CI != null }}
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.DOCKER_CI }}
  
-  #     - name: 🧩 Create multi-arch manifest
-  #       if: ${{ env.SECRET_DOCKER_CI != null }}
-  #       run: |
-  #         IMAGE="ghcr.io/${REPOSITORY}/qt6"
-  #         docker buildx imagetools create -t "${IMAGE}:${QT_VERSION}" -t "${IMAGE}:latest" "${IMAGE}:${QT_VERSION}-amd64" "${IMAGE}:${QT_VERSION}-arm64" "${IMAGE}:${QT_VERSION}-armv7" "${IMAGE}:${QT_VERSION}-armv6"
-  #         docker buildx imagetools inspect "${IMAGE}:latest"
+      - name: 🧩 Create multi-arch manifest
+        if: ${{ env.SECRET_DOCKER_CI != null }}
+        run: |
+          docker buildx imagetools create -t "ghcr.io/${REPOSITORY}/qt6:latest" "ghcr.io/${REPOSITORY}/qt6:${QT_VERSION}-amd64" "ghcr.io/${REPOSITORY}/qt6:${QT_VERSION}-arm64" "ghcr.io/${REPOSITORY}/qt6:${QT_VERSION}-armv7" "ghcr.io/${REPOSITORY}/qt6:${QT_VERSION}-armv6"
+          docker buildx imagetools inspect "ghcr.io/${REPOSITORY}/qt6:latest"
 
   # build_qt:
   #   name: Build Qt6

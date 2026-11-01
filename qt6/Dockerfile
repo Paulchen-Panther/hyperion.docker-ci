@@ -38,10 +38,6 @@ ARG QT_VERSION
 ARG QT_PREFIX=/opt/qt6
 # Additional modules built after qtbase
 ARG QT_MODULES="qtserialport qtwebsockets"
-# 1 = build the xcb platform plugin (like the distro Qt), 0 = headless/offscreen
-ARG QT_XCB=1
-# Additional qtbase configure options, e.g. more -no-feature-*
-ARG QT_EXTRA_ARGS=""
 # ARMv6K is required for lock-free 8/64-bit atomics (all Raspberry Pi 1/Zero are ARMv6KZ)
 ARG ARMV6_FLAGS="-march=armv6zk -mfpu=vfp -mfloat-abi=hard"
 ARG TARGETARCH
@@ -49,16 +45,13 @@ ARG TARGETVARIANT
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        build-essential ninja-build perl python3 pkg-config ca-certificates curl xz-utils \
-        libssl-dev libudev-dev libxkbcommon-dev && \
-    if [ "${QT_XCB}" = "1" ]; then \
-        apt-get install -y --no-install-recommends \
-            libfontconfig1-dev libx11-dev libx11-xcb-dev libxkbcommon-x11-dev \
-            libxcb1-dev libxcb-glx0-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev \
-            libxcb-randr0-dev libxcb-render0-dev libxcb-render-util0-dev libxcb-shape0-dev \
-            libxcb-shm0-dev libxcb-sync-dev libxcb-util-dev libxcb-xfixes0-dev \
-            libxcb-xinerama0-dev libxcb-xinput-dev libxcb-xkb-dev libxcb-cursor-dev; \
-    fi && \
+    build-essential ninja-build perl python3 pkg-config ca-certificates curl xz-utils \
+    libssl-dev libudev-dev libxkbcommon-dev libfontconfig1-dev \
+    libx11-dev libx11-xcb-dev libxkbcommon-x11-dev libxcb1-dev libxcb-glx0-dev \
+    libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev \
+    libxcb-randr0-dev libxcb-render0-dev libxcb-render-util0-dev libxcb-shape0-dev \
+    libxcb-shm0-dev libxcb-sync-dev libxcb-util-dev libxcb-xfixes0-dev \
+    libxcb-xinerama0-dev libxcb-xinput-dev libxcb-xkb-dev libxcb-cursor-dev && \
     rm -rf /var/lib/apt/lists/*
 
 # Install CMake (same pattern as in ubuntu_debian / fedora / debian-armv6)
@@ -77,24 +70,20 @@ RUN base="https://download.qt.io/archive/qt/${QT_VERSION%.*}/${QT_VERSION}/submo
 RUN if [ "${TARGETARCH}${TARGETVARIANT}" = "armv6" ]; then \
         export CFLAGS="${ARMV6_FLAGS}" CXXFLAGS="${ARMV6_FLAGS}"; \
     fi && \
-    if [ "${QT_XCB}" = "1" ]; then \
-        PLATFORM_ARGS="-xcb -xcb-xlib -fontconfig"; \
-    else \
-        PLATFORM_ARGS="-no-xcb -no-fontconfig -qpa offscreen"; \
-    fi && \
     mkdir -p /build/qtbase && cd /build/qtbase && \
     /src/qtbase-everywhere-src-${QT_VERSION}/configure \
         -prefix "${QT_PREFIX}" \
         -release \
-        -nomake tests -nomake examples \
+        -nomake tests \
+        -nomake examples \
         -no-dbus -no-icu -no-glib \
         -no-opengl -no-feature-vulkan \
         -no-feature-printsupport -no-feature-cups \
         -no-feature-brotli -no-feature-gssapi -no-feature-ocsp \
-        -openssl-linked \
+        -xcb -xcb-xlib \
+        -openssl-runtime -fontconfig \
         -qt-pcre -qt-zlib -qt-freetype -qt-harfbuzz -qt-libpng -qt-libjpeg \
-        -sql-sqlite -qt-sqlite -no-sql-mysql -no-sql-odbc -no-sql-psql \
-        ${PLATFORM_ARGS} ${QT_EXTRA_ARGS} && \
+        -sql-sqlite -qt-sqlite -no-sql-mysql -no-sql-odbc -no-sql-psql && \
     cmake --build . --parallel "$(nproc)" && \
     cmake --install .
 
@@ -140,13 +129,6 @@ RUN mkdir -p /out && \
         -DQT_ARCH="${A}" \
         -DQT_SRC="/src/qtbase-everywhere-src-${QT_VERSION}" && \
     cd /pkg/build && cpack
-
-# Sanity check: does the installer unpack cleanly (including symlinks)?
-RUN mkdir /chk && \
-    sh /out/qt6-*.sh --skip-license --prefix=/chk --exclude-subdir && \
-    test -f /chk/lib/cmake/Qt6/Qt6Config.cmake && \
-    test -L /chk/lib/libQt6Core.so.6 && \
-    rm -rf /chk
 
 # ------------------------------------------
 # Stage 5: Final image

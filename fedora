@@ -38,12 +38,12 @@ RUN dnf -y group install 'development-tools' 'c-development' 'rpm-development-to
     python3-jinja2 \
     libXrandr-devel \
     xcb-util-image-devel \
+    xcb-util-devel \
     turbojpeg-devel \
     libjpeg-turbo-devel \
     libusb1-devel \
     avahi-libs \
     avahi-compat-libdns_sd-devel \
-    xcb-util-devel \
     dbus-devel \
     protobuf-devel \
     protobuf-compiler \

@@ -169,7 +169,7 @@ jobs:
 
   build_image:
     name: 🐧 ${{ matrix.os.description }} Qt ${{ matrix.qt_version }}
-    needs: [ build_qemu, build_cmake ]
+    needs: [ build_qemu, build_cmake, build_qt6, merge_qt6 ]
     strategy:
       fail-fast: false
       matrix:
